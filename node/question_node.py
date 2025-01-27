@@ -32,8 +32,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 from state.question_state import GraphState
 from etc.evaluator import GroundednessChecker
 from etc.graphs import visualize_graph
-# from evaluator import GroundednessChecker
-# from graphs import visualize_graph
+from etc.etcc import format_docs, is_relevant
 ####################################################################################################################
 ################################################### STATE ########################################################### 청크 합치기
 # 환경설정
@@ -41,21 +40,6 @@ load_dotenv()
 
 openai.api_key = os.getenv('OPENAI_API_KEY')
 embeddings = OpenAIEmbeddings()
-
-def format_docs(docs):
-    return "\n".join(
-        [
-            f"{doc.page_content}"
-            for doc in docs
-        ]
-    )
-
-# 관련성 체크하는 함수(router)
-def is_relevant(state: GraphState):
-    if state["relevance"] == "yes":
-        return "relevant"
-    else:
-        return "not relevant"
     
 # 문서 검색 노드
 def retrieve_document(state: GraphState, collection_name: str, class_id: str):
@@ -84,20 +68,16 @@ def retrieve_document(state: GraphState, collection_name: str, class_id: str):
     
     # 검색된 문서를 context 키에 저장합니다.
     return retrieved_docs
-
-# #retriever_1.invoke("인재상")
-
-    
     
 
 # 관련성 체크 노드
 def relevance_check(state: GraphState):
-    # 관련성 평가기를 생성합니다.
+    # 1. 관련성 평가기를 생성
     question_answer_relevant = GroundednessChecker(
         llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="question-retrieval"
     ).create()
 
-    # 관련성 체크를 실행("yes" or "no")
+    # 2. 관련성 체크를 실행("yes" or "no")
     response = question_answer_relevant.invoke(
         {"question": state['final_question'], "context1": state['resume'], 'context2':state['evaluation']}
     )
@@ -105,7 +85,6 @@ def relevance_check(state: GraphState):
     print("==== [RELEVANCE CHECK] ====")
     print(response.score)
 
-    # 참고: 여기서의 관련성 평가기는 각자의 Prompt 를 사용하여 수정할 수 있습니다. 여러분들의 Groundedness Check 를 만들어 사용해 보세요!
     return {'relevance':response.score}
 
 
@@ -117,7 +96,7 @@ class question(BaseModel):
     )
 
 # 결과 종합 노드
-def combine_prompt(state: GraphState):
+def combine_prompt(state: GraphState, prompt: PromptTemplate):
     # State 변수 선언 지정
     job = state['job']
     resume = state['resume']
@@ -126,44 +105,16 @@ def combine_prompt(state: GraphState):
     # 1. 모델 선언
     model = ChatOpenAI(model='gpt-3.5-turbo', streaming=True)
     
-    # 구조화된 출력을 위한 LLM 설정
+    # 2. 구조화된 출력을 위한 LLM 설정
     llm_with_tool = model.with_structured_output(question)
     
-    # Prompt
-    prompt = PromptTemplate(
-        # 귀하는 지원자의 자소서와 채용하는 회사 기준 db의 관련성을 파악해 채용 질문을 생성하는 기계입니다.
-        # 지원자의 자소서는 다음과 같습니다: {resume}
-        # 채용하는 회사 기준db는 다음과 같습니다: {recruit}
-        # 회사 기준db를 바탕으로 지원자의 자소서를 포함하여 채용 질문을 뽑아냅니다.   
-        # 해당 {직무}에서 심화적이고 기술중심적으로 채용 질문을 생성합니다.
-        # 절대 회사 기준 db와 지원자의 자소서에 있는 내용 그대로 질문에 포함하면 안됩니다.  
-        template = """
-        You are a machine designed to generate interview questions by analyzing the relevance between an applicant's resume and the recruiting company's database.
- 
-        Here is the resume : {resume}
-        Here is the recruiting company's database: {evaluation}
-       
-        Based on the company's database, generate interview questions that incorporate the applicant's resume.
-        Create interview questions that are advanced and highly technical, specifically tailored for the {job}.
-       
-        Do not directly include the exact content from the company's database or the applicant's resume in the questions.
-        
-        Please write the questions in Korean.
-        
-        Write the questions as follows:
-        (first question)
-        (second question)
-        """,
-        input_variables=['resume', 'evaluation', 'job']
-    )
-    
-    # llm + PydanticOutputParser 바인딩 체인 생성
+    # 3. llm + PydanticOutputParser 바인딩 체인 생성
     chain = prompt | llm_with_tool
 
-    # 질문 생성 LLM 실행
+    # 4. 질문 생성 LLM 실행
     answer_middle = chain.invoke({'resume' : resume, 'evaluation' : evaluation, 'job' : job})
 
-    # 질문 추출
+    # 5. 질문 추출
     question_score = answer_middle.interview
     
     return {'final_question':question_score}

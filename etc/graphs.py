@@ -3,7 +3,8 @@ from IPython.display import Image, display
 from langgraph.graph.state import CompiledStateGraph
 from dataclasses import dataclass
 
-
+import io
+from PIL import Image as PILImage
 @dataclass
 class NodeStyles:
     default: str = (
@@ -17,7 +18,7 @@ class NodeStyles:
     )
 
 
-def visualize_graph(graph, xray=False):
+def visualize_graph(graph, file_name, xray=False):
     """
     CompiledStateGraph 객체를 시각화하여 표시합니다.
 
@@ -34,16 +35,18 @@ def visualize_graph(graph, xray=False):
         Exception: 그래프 시각화 과정에서 오류가 발생한 경우 예외를 출력합니다.
     """
     try:
+        file_path = f'./image/{file_name}.png'
         # 그래프 시각화
         if isinstance(graph, CompiledStateGraph):
-            display(
-                Image(
-                    graph.get_graph(xray=xray).draw_mermaid_png(
-                        background_color="white",
-                        node_colors=NodeStyles(),
-                    )
-                )
+            png_data = graph.get_graph(xray=xray).draw_mermaid_png(
+                background_color="white",
+                node_colors=NodeStyles(),
             )
+        
+            image = PILImage.open(io.BytesIO(png_data))
+            # 이미지 파일로 저장
+            image.save(file_path)
+            print(f"이미지가 '{file_path}'로 저장되었습니다.")
     except Exception as e:
         print(f"[ERROR] Visualize Graph Error: {e}")
 

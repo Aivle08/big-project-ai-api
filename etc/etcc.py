@@ -14,4 +14,4 @@ def is_relevant(state: GraphState):
     if state["relevance"] == "yes":
         return "relevant"
     else:
-        return "not relevant"
+        return "not_relevant"
