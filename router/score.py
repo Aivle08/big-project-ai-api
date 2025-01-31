@@ -43,11 +43,11 @@ def summary_graph():
             lambda state: {"eval_resume": score_resume(state, score_prompt)},
         )
         workflow.add_node("relevance_check", relevance_check)
-        #workflow.add_node("fact_checking", fact_checking)
+        workflow.add_node("fact_checking", fact_checking)
         
         # 2. Edge 연결
         workflow.add_edge('retrieve_document','relevance_check')
-        workflow.add_edge('relevance_check','score_resume')
+        workflow.add_edge('score_resume','fact_checking')
         
         #3. 조건부 엣지 추가
         workflow.add_conditional_edges(
@@ -55,6 +55,13 @@ def summary_graph():
             is_relevant,
             {"relevant": 'score_resume',
             "not_relevant": "retrieve_document",  # 사실이 아니면 다시 요약합니다.
+            },
+        )
+        workflow.add_conditional_edges(
+            "fact_checking",  # 사실 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
+            is_fact,
+            {"fact": END,
+            "not_fact": "score_resume",  # 사실이 아니면 다시 요약합니다.
             },
         )
 

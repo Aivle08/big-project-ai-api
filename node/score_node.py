@@ -142,13 +142,13 @@ def fact_checking(state: ScoreState):
         llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="fact-check"
     ).create()
 
+    print('='*30,state['eval_resume']['eval_resume'][1])
     # 2. 관련성 체크를 실행("yes" or "no")
     response = question_answer_relevant.invoke(
-        {"original_document": state['resume'], "context1": state['eval_resume']}
+        {"original_document": state['resume'], "eval_document": state['eval_resume']['eval_resume'][1]}
     )
     
-    print('evaluation: ', state['eval_resume'])
-    print("==== [RELEVANCE CHECK] ====")
+    print("==== [FACT CHECK] ====")
     print(response.score)
 
     return {'yes_or_no':response.score}

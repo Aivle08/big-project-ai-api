@@ -202,17 +202,31 @@ class GroundednessChecker:
             input_vars = ["question", "context1"]
         
         elif self.target == "fact-check":
+            # 당신은 평가 기준에 지원자의 자기소개서 내용이 포함되어 있는지, 그리고 포함된 내용이 사실인지를 판단하기 위해 설계된 기계입니다.
+
+            # 다음은 지원자의 자기소개서입니다:\n\n {오리지널_document} \n\n
+            # 평가 기준은 다음과 같습니다:\n\n {eval_document} \n
+
+            # ## 지침:
+            # 1. 제공된 평가 기준에 지원자의 자기소개서에서 파생된 내용이 포함되어 있는지 평가합니다.
+            # 2. 평가 근거에 자기소개서에 사실적이고 진실한 내용이 포함된 경우 "예"로 응답하세요.
+            # 3. 평가 기준에 자기소개서의 내용이 포함되어 있지만 허위 또는 오해의 소지가 있는 정보가 포함된 경우 "아니오"로 응답합니다.
+            # 4. 평가 기준에 자기소개서의 내용이 포함되지 않은 경우 "아니오"로 응답합니다.
+            # 5. 평가 기준과 지원자의 자기소개서 내용 간의 사실적 일치에만 집중하세요.
             template = """
-            You are tasked with checking whether the summarized document is factually correct compared to the original document.
+            You are a machine designed to determine whether the evaluation basis includes content from the applicant's cover letter and if the included content is factual.
 
-            Here is the original document:  {original_document}
-            Here is the summarized document: {summarized_document}
-
-            Your task is to compare the two documents and determine if the summary accurately reflects the facts in the original document.
-            - If the summary is factually correct and accurately represents the content of the original document, return 'yes'.
-            - If the summary contains any incorrect or misleading information that contradicts the original document, return 'no'.
+            Here is the applicant's cover letter: \n\n {original_document} \n\n
+            Here is the evaluation basis: \n\n {eval_document} \n
+            
+            ## Instructions:
+            1. Evaluate whether the provided evaluation basis contains content derived from the applicant's cover letter.
+            2. If the evaluation basis includes factual and truthful content from the cover letter, respond with "yes".
+            3. If the evaluation basis includes content from the cover letter but contains false or misleading information, respond with "no".
+            4. If the evaluation basis does not include any content from the cover letter, respond with "no".
+            5. Focus solely on the factual alignment between the evaluation basis and the content in the applicant's cover letter.
             """
-            input_vars = ["original_document", "summarized_document"]
+            input_vars = ["original_document", "eval_document"]
 
         else:
             raise ValueError(f"Invalid target: {self.target}")
