@@ -25,7 +25,7 @@ from pydantic import BaseModel, Field
 
 # DB
 from pymilvus import Collection, connections
-from typing import TypedDict, Annotated, List
+from typing import TypedDict, Annotated, List,Dict, Any
 
 # Error
 import warnings
@@ -45,14 +45,10 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 embeddings = OpenAIEmbeddings()
     
 # PydanticOutputParser
-class score(BaseModel):
-    # 점수 산출 형식 지정
-    interview: str = Field(
-        description="""
-            "{eval_item}": <Score>,
-            "{eval_item} of Reason": "<Description of evaluation basis>"
-        """
-    )
+# class score(BaseModel):
+#     # 점수 산출 형식 지정
+#     interview: dict = Field(
+#         description="json형식으로 뽑아줘"
     
 # Retriever 노드
 def retrieve_document(state: ScoreState, collection_name: str, class_id: str):
@@ -81,6 +77,7 @@ def retrieve_document(state: ScoreState, collection_name: str, class_id: str):
     
     # 검색된 문서를 context 키에 저장합니다.
     return {f'{collection_name}':retrieved_docs}
+#     )
 
 # 관련성 체크 노드
 def relevance_check(state: ScoreState):
@@ -91,15 +88,23 @@ def relevance_check(state: ScoreState):
 
     # 관련성 체크를 실행("yes" or "no")
     response = question_answer_relevant.invoke(
-        {"question": state['final_result'], "context1": state['resume'], 'context2':state['query_main']}
+        {"question": state['query_main'], "context1": state['resume']}
     )
 
     print("==== [RELEVANCE CHECK] ====")
     print(response.score)
 
     # 참고: 여기서의 관련성 평가기는 각자의 Prompt 를 사용하여 수정할 수 있습니다. 여러분들의 Groundedness Check 를 만들어 사용해 보세요!
-    return {'relevance':response.score}
+    return {'yes_or_no':response.score}
 
+# PydanticOutputParser
+class score(BaseModel):    # 점수 산출 형식 지정    
+    score_output: List[str] = Field(
+        description="""
+        A Dict object containing evaluation scores for different resume categories. 
+        Each key represents a category, and the corresponding value is a score between 0 and 100.
+        """    
+    )
 
 # 자소서 점수 측정 노드
 def score_resume(state: ScoreState, prompt: PromptTemplate):
@@ -111,9 +116,12 @@ def score_resume(state: ScoreState, prompt: PromptTemplate):
 
     # 1. 모델 선언
     model = ChatOpenAI(model='gpt-4o', streaming=True, temperature=0)
+    
+    # 2. 구조화된 출력을 위한 LLM 설정
+    llm_with_tool = model.with_structured_output(score)
 
     # PromptTemplate + model + StrOutputParser 체인 생성
-    chain = prompt | model | StrOutputParser()
+    chain = prompt | llm_with_tool
 
     answer_middle = chain.invoke({
             "resume": resume,
@@ -123,7 +131,7 @@ def score_resume(state: ScoreState, prompt: PromptTemplate):
         })
     
     # 질문 추출
-    question_score = answer_middle
+    question_score = answer_middle.score_output
     
     return {'eval_resume':question_score}
 
@@ -136,10 +144,10 @@ def fact_checking(state: ScoreState):
 
     # 2. 관련성 체크를 실행("yes" or "no")
     response = question_answer_relevant.invoke(
-        {"original_document": state['resume'], "eval_document": state['summary_result']}
+        {"original_document": state['resume'], "context1": state['eval_resume']}
     )
     
-    print('summarized: ', state['summary_result'])
+    print('evaluation: ', state['eval_resume'])
     print("==== [RELEVANCE CHECK] ====")
     print(response.score)
 

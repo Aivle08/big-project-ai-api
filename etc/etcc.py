@@ -11,10 +11,10 @@ def format_docs(docs):
 
 # 관련성 체크하는 함수(router)
 def is_relevant(state: ScoreState):
-    if state["relevance"] == "yes":
+    if state["yes_or_no"] == "yes":
         return "relevant"
     else:
-        return "not relevant"
+        return "not_relevant"
 
 # 사실 여부 체크하는 함수(router)
 def is_fact(state: ScoreState):

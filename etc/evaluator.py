@@ -112,7 +112,6 @@ class GroundnessAnswerRetrievalScore(BaseModel):
         description="relevant or not relevant. Answer 'yes' if the answer is relevant to the retrieved document else answer 'no'"
     )
 
-
 class GroundnessQuestionRetrievalScore(BaseModel):
     """Binary scores for relevance checks"""
 
@@ -191,14 +190,16 @@ class GroundednessChecker:
             input_vars = ["question", "answer"]
 
         elif self.target == "question-retrieval":
-            template = """You are a grader assessing whether a retrieved document is relevant to the given question. \n
-                Here is the question: \n\n {question} \n\n
-                Here is the retrieved document: \n\n {context1},{context2} \n
-                If the document contains information that could help answer the question, grade it as relevant. \n
-                Consider both semantic meaning and potential usefulness for answering the question. \n
-                
-                Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question."""
-            input_vars = ["question", "context1",'context2']
+            template = """
+            You are a scorer who assesses whether a searched document is related to a given question.
+            Here is the question: \n\n {question} \n\n
+            Here is the retrieved document: \n\n {context1} \n
+            You should also assess whether the retrieved document contains accurate information about the question,
+            or if LLM is likely to hallucinate content that is not in the document.
+            
+            Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question.
+            """
+            input_vars = ["question", "context1"]
         
         elif self.target == "fact-check":
             template = """

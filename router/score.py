@@ -17,9 +17,9 @@ from langgraph.checkpoint.memory import MemorySaver
 # State
 from state.score_state import ScoreState
 # Node
-from node.score_node import retrieve_document, score_resume, fact_checking
+from node.score_node import retrieve_document, score_resume, fact_checking, relevance_check
 # etc
-from etc.etcc import is_fact
+from etc.etcc import is_fact, is_relevant
 from etc.graphs import visualize_graph
 from etc.messages import invoke_graph, random_uuid
 from prompt.score_prompt import score_prompt
@@ -42,20 +42,21 @@ def summary_graph():
             "score_resume",
             lambda state: {"eval_resume": score_resume(state, score_prompt)},
         )
+        workflow.add_node("relevance_check", relevance_check)
         #workflow.add_node("fact_checking", fact_checking)
         
         # 2. Edge 연결
-        workflow.add_edge('retrieve_document','score_resume')
-        #workflow.add_edge('summary_document','fact_checking')
+        workflow.add_edge('retrieve_document','relevance_check')
+        workflow.add_edge('relevance_check','score_resume')
         
-        # 3. 조건부 엣지 추가
-        # workflow.add_conditional_edges(
-        #     "fact_checking",  # 사실 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
-        #     is_fact,
-        #     {"fact": END,
-        #         "not_fact": "summary_document",  # 사실이 아니면 다시 요약합니다.
-        #     },
-        # )
+        #3. 조건부 엣지 추가
+        workflow.add_conditional_edges(
+            "relevance_check",  # 사실 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
+            is_relevant,
+            {"relevant": 'score_resume',
+            "not_relevant": "retrieve_document",  # 사실이 아니면 다시 요약합니다.
+            },
+        )
 
         # 4. 그래프 진입점 설정
         workflow.set_entry_point("retrieve_document")
@@ -115,7 +116,7 @@ def summary_graph():
                             applicant_id = 1,
                             eval_item = input_eval_item,
                             eval_item_content = input_eval_item_content,
-                            query_main=f'{input_job} 직무에 대한 {input_eval_item}을 평가해주세요.')
+                            query_main=f'{input_job} 직무에 대한 {input_eval_item} 뽑아주세요.')
 
         # 10. 그래프 실행 출력
         invoke_graph(app, inputs, config)
@@ -130,7 +131,10 @@ def summary_graph():
         #print(f'yes_or_no:\n{outputs["yes_or_no"]}')
         print(f'eval_resume:\n{outputs["eval_resume"]}')
         
-        return outputs["eval_resume"]
+        return {
+            f'{input_eval_item}':int(outputs["eval_resume"]["eval_resume"][0]),
+            f'{input_eval_item}평가이유':outputs["eval_resume"]["eval_resume"][1]
+        }
     except Exception as e:
             traceback.print_exc()
             return {

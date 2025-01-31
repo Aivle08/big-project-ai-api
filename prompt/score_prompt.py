@@ -42,14 +42,12 @@ score_prompt = PromptTemplate(
 
         Please write the basis in Korean.
         ### Output Format:
-        Return your response strictly in this JSON format:
-            "{eval_item}": <Score>,
-            "{eval_item}의 평가 근거": "<Description>"
-        
+        Return your response strictly in this Dict format:
+            <Score>,
+            <Description>
         ### Example Output:
-            "Technical Skills": 63,
-            "Technical Skills of basis": "The candidate demonstrated excellent technical proficiency with relevant examples."
-
+            63,
+            The candidate demonstrated excellent technical proficiency with relevant examples.
         Now, evaluate the given resume and provide your response in the required format.
 
         ### Resume:
