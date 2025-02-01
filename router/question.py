@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, status, File, UploadFile
 from langchain_core.runnables import RunnableConfig
 
 # Graph
-from langgraph.graph import END, StateGraph
+from langgraph.graph import END, START, StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 
 ## Module
@@ -42,6 +42,8 @@ async def tech_prompt():
             "retrieve_2_document",
             lambda state: {"evaluation": retrieve_document(state, "evaluation", 'company_id')},
         )
+        
+        
         workflow.add_node("relevance_check", relevance_check)
         workflow.add_node(
             "combine_prompt",
@@ -49,8 +51,12 @@ async def tech_prompt():
         )
 
         # 2. Edge 연결
-        workflow.add_edge('retrieve_1_document','retrieve_2_document')
-        workflow.add_edge('retrieve_2_document','combine_prompt')
+        workflow.add_edge(START, "retrieve_1_document")
+        workflow.add_edge(START, "retrieve_2_document")
+        
+        workflow.add_edge("retrieve_1_document", "combine_prompt")
+        workflow.add_edge("retrieve_2_document", "combine_prompt")
+    
         workflow.add_edge('combine_prompt','relevance_check')
         
         # 3. 조건부 엣지 추가
@@ -112,7 +118,7 @@ async def tech_prompt():
             
 # 경험 중심 Prompt
 @question.post("/experience", status_code = status.HTTP_200_OK, tags=['question'])
-async def tech_prompt():
+async def experience_prompt():
     print('\n\033[36m[AI-API] \033[32m 질문 추출(경험)')
     try:
         workflow = StateGraph(GraphState)
@@ -257,7 +263,7 @@ async def tech_prompt():
             
 # 경력 중심 Prompt
 @question.post("/work", status_code = status.HTTP_200_OK, tags=['question'])
-async def tech_prompt():
+async def work_prompt():
     print('\n\033[36m[AI-API] \033[32m 질문 추출(경력)')
     try:
         workflow = StateGraph(GraphState)
