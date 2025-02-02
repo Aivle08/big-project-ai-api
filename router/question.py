@@ -10,16 +10,16 @@ from fastapi import APIRouter, HTTPException, status, File, UploadFile
 from langchain_core.runnables import RunnableConfig
 
 # Graph
-from langgraph.graph import END, START, StateGraph
+from langgraph.graph import END, StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 
 ## Module
 # State
-from state.question_state import GraphState
+from state.question_state import QuestionState
 # Node
-from node.question_node import retrieve_document, relevance_check, combine_prompt
+from node.question_node import retrieve_document, relevance_check, combine_prompt, fact_checking, input
 # etc
-from etc.etcc import is_relevant
+from etc.etcc import is_relevant, is_fact
 from etc.graphs import visualize_graph
 from etc.messages import invoke_graph, random_uuid
 from prompt.question_prompt import tecnology_prompt, experience_prompt, work_prompt
@@ -31,9 +31,11 @@ question = APIRouter(prefix='/question')
 async def tech_prompt():
     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
     try:
-        workflow = StateGraph(GraphState)
+        workflow = StateGraph(QuestionState)
 
         # 1. Node 추가
+        workflow.add_node("input", input)
+        ## Retriever
         workflow.add_node(
             "retrieve_1_document",
             lambda state: {"resume": retrieve_document(state, "resume", 'applicant_id')},
@@ -42,35 +44,62 @@ async def tech_prompt():
             "retrieve_2_document",
             lambda state: {"evaluation": retrieve_document(state, "evaluation", 'company_id')},
         )
-        
-        
-        workflow.add_node("relevance_check", relevance_check)
+        ## Relevance
+        workflow.add_node(
+            "relevance_check_1",
+            lambda state: {"relevance_1": relevance_check(state, 'resume')},
+        )
+        workflow.add_node(
+            "relevance_check_2",
+            lambda state: {"relevance_2": relevance_check(state, 'evaluation')},
+        )
         workflow.add_node(
             "combine_prompt",
             lambda state: {"final_question": combine_prompt(state, tecnology_prompt)},
         )
+        workflow.add_node("fact_checking", fact_checking)
 
         # 2. Edge 연결
-        workflow.add_edge(START, "retrieve_1_document")
-        workflow.add_edge(START, "retrieve_2_document")
-        
-        workflow.add_edge("retrieve_1_document", "combine_prompt")
-        workflow.add_edge("retrieve_2_document", "combine_prompt")
-    
-        workflow.add_edge('combine_prompt','relevance_check')
+        workflow.add_edge("input", "retrieve_1_document")
+        workflow.add_edge("input", "retrieve_2_document")
+        workflow.add_edge("retrieve_1_document", "relevance_check_1")
+        workflow.add_edge("retrieve_2_document", "relevance_check_2")
         
         # 3. 조건부 엣지 추가
         workflow.add_conditional_edges(
-            "relevance_check",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
-            is_relevant,
+            "relevance_check_1",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
+            lambda state: is_relevant(state, key='relevance_1'),
             {
-                "relevant": END,  # 관련성이 있으면 답변을 생성합니다.
-                "not_relevant": "combine_prompt",  # 관련성이 없으면 다시 검색합니다.
+                "relevant": "combine_prompt",  # 관련성이 있으면 답변을 생성합니다.
+                "not_relevant": "retrieve_1_document",  # 관련성이 없으면 다시 검색합니다.
             },
         )
+        # 3. 조건부 엣지 추가
+        workflow.add_conditional_edges(
+            "relevance_check_2",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
+            lambda state: is_relevant(state, key = 'relevance_2'),
+            {
+                "relevant": "combine_prompt",  # 관련성이 있으면 답변을 생성합니다.
+                "not_relevant": "retrieve_2_document",  # 관련성이 없으면 다시 검색합니다.
+            },
+        )
+        
+    
+        workflow.add_edge('combine_prompt','fact_checking')
+        
+        # 3. 조건부 엣지 추가
+        workflow.add_conditional_edges(
+            "fact_checking",  # 관련성 체크 노드에서 나온 결과를 is_fact 함수에 전달합니다.
+            is_fact,
+            {
+                "fact": END,  # 관련성이 있으면 답변을 생성합니다.
+                "not_fact": "combine_prompt",  # 관련성이 없으면 다시 검색합니다.
+            },
+        )
+        
 
         # 4. 그래프 진입점 설정
-        workflow.set_entry_point("retrieve_1_document")
+        workflow.set_entry_point("input")
 
         # 5. 체크포인터 설정
         memory = MemorySaver()
@@ -80,18 +109,18 @@ async def tech_prompt():
 
         # 7. 그래프 시각화
         visualize_graph(app,'tech_graph')
-            
+        
         # 8. config 설정(재귀 최대 횟수, thread_id)
-        config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
+        config = RunnableConfig(recursion_limit=30, configurable={"thread_id": random_uuid()})
 
 
         # 9. 질문 입력
         input_job = 'IT영업'
-        inputs = GraphState(job=input_job, 
-                            company_id = 1,
-                            applicant_id = 2,
-                            relevance='no',
-                            query_main=f'{input_job}의 기술 중심으로 생성해줘' )
+        inputs = QuestionState(job=input_job, 
+                                company_id = 1,
+                                applicant_id = 3,
+                                fact='yes',
+                                query_main=f'{input_job}의 기술 중심으로 생성해줘' )
 
 
         # 10. 그래프 실행 출력
@@ -105,7 +134,9 @@ async def tech_prompt():
         print(f'query_main:\n{outputs["query_main"]}')
         print(f'resume:\n{outputs["resume"]}')
         print(f'evaluation:\n{outputs["evaluation"]}')
-        print(f'relevance:\n{outputs["relevance"]}')
+        print(f'relevance_1:\n{outputs["relevance_1"]}')
+        print(f'relevance_2:\n{outputs["relevance_2"]}')
+        print(f'fact:\n{outputs["fact"]}')
         print(f'final_question:\n{outputs["final_question"]}')
         
         return outputs["final_question"]
@@ -121,7 +152,7 @@ async def tech_prompt():
 async def experience_prompt():
     print('\n\033[36m[AI-API] \033[32m 질문 추출(경험)')
     try:
-        workflow = StateGraph(GraphState)
+        workflow = StateGraph(QuestionState)
 
         # 1. Node 추가
         workflow.add_node(
@@ -165,9 +196,9 @@ async def experience_prompt():
         input_job = 'IT영업'
 
         # 질문 입력
-        inputs = GraphState(job=input_job, 
+        inputs = QuestionState(job=input_job, 
                             company_id = 1,
-                            applicant_id = 3,
+                            applicant_id = 1,
                             evaluation = """5. 공고
                                             수행업무
                                             • 대기업/중견기업 고객 대상 ICT 관련 영업활동
@@ -266,7 +297,7 @@ async def experience_prompt():
 async def work_prompt():
     print('\n\033[36m[AI-API] \033[32m 질문 추출(경력)')
     try:
-        workflow = StateGraph(GraphState)
+        workflow = StateGraph(QuestionState)
 
         # 1. Node 추가
         workflow.add_node(
@@ -286,7 +317,7 @@ async def work_prompt():
         # 3. 조건부 엣지 추가
         workflow.add_conditional_edges(
             "relevance_check",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
-            is_relevant,
+            is_fact,
             {
                 "relevant": END,  # 관련성이 있으면 답변을 생성합니다.
                 "not_relevant": "combine_prompt",  # 관련성이 없으면 다시 검색합니다.
@@ -310,7 +341,7 @@ async def work_prompt():
         input_job = 'IT영업'
 
         # 질문 입력
-        inputs = GraphState(job=input_job, 
+        inputs = QuestionState(job=input_job, 
                             company_id = 1,
                             applicant_id = 1,
                             evaluation = """5. 공고

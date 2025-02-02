@@ -120,6 +120,12 @@ class GroundnessQuestionRetrievalScore(BaseModel):
         description="relevant or not relevant. Answer 'yes' if the question is relevant to the retrieved document else answer 'no'"
     )
 
+class QuestionFactCheckScore(BaseModel):
+    """Binary scores for fact checks between question and retriever documents"""
+
+    score: str = Field(
+        description="fact or not fact. Answer 'Yes' if the generated question is factually correct and accurately indicates the content of the original document, else answer 'no'"
+    )
 
 class GroundednessChecker:
     """
@@ -158,6 +164,8 @@ class GroundednessChecker:
             llm = self.llm.with_structured_output(GroundnessQuestionScore)
         elif self.target == "question-retrieval":
             llm = self.llm.with_structured_output(GroundnessQuestionRetrievalScore)
+        elif self.target == "fact-check":
+            llm = self.llm.with_structured_output(QuestionFactCheckScore)
         else:
             raise ValueError(f"Invalid target: {self.target}")
 
@@ -184,12 +192,30 @@ class GroundednessChecker:
         elif self.target == "question-retrieval":
             template = """You are a grader assessing whether a retrieved document is relevant to the given question. \n
                 Here is the question: \n\n {question} \n\n
-                Here is the retrieved document: \n\n {context1},{context2} \n
+                Here is the retrieved document: \n\n {context1} \n
                 If the document contains information that could help answer the question, grade it as relevant. \n
                 Consider both semantic meaning and potential usefulness for answering the question. \n
                 
                 Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question."""
-            input_vars = ["question", "context1",'context2']
+            input_vars = ["question", "context1"]
+            
+            # You are a grader assessing whether a generated question is factually correct when compared to the original documents. \n
+            # Here are the original documents: \n\n {original_document_1} \n\n {original_document_2} \n
+            # Here is the generated question: \n\n {question} \n
+            # Your mission is to compare the generated question with the original documents and ensure that the question accurately reflects the facts in the original documents. \n
+            # - If the question is factually correct and accurately indicates the content of the original documents, grade it as 'yes'. \n
+            # - If the question contains inaccurate or misleading information that contradicts the original documents, grade it as 'no'.
+        elif self.target == "fact-check":
+            template = """
+            You are a grader assessing whether a retrieved document is relevant to the given question. \n
+            Here are the original documents: \n\n {original_document_1} \n\n {original_document_2} \n
+            Here is the generated question: \n\n {question} \n
+            If the document contains information that could help answer the question, grade it as relevant. \n
+            Consider both semantic meaning and potential usefulness for answering the question. \n
+            
+            Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question
+            """
+            input_vars = ["original_document_1", "original_document_2", "question"]
 
         else:
             raise ValueError(f"Invalid target: {self.target}")

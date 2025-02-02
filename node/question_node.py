@@ -29,7 +29,7 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # Module
-from state.question_state import GraphState
+from state.question_state import QuestionState
 from etc.evaluator import GroundednessChecker
 from etc.graphs import visualize_graph
 from etc.etcc import format_docs, is_relevant
@@ -41,8 +41,12 @@ load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
 embeddings = OpenAIEmbeddings()
     
+# Input 노드 정의
+def input(state: QuestionState):
+    return state
+    
 # 문서 검색 노드
-def retrieve_document(state: GraphState, collection_name: str, class_id: str):
+def retrieve_document(state: QuestionState, collection_name: str, class_id: str):
     # 질문을 상태에서 가져옵니다.
     latest_question = state["query_main"]
     state_class_id = state[f'{class_id}']
@@ -68,25 +72,24 @@ def retrieve_document(state: GraphState, collection_name: str, class_id: str):
     
     # 검색된 문서를 context 키에 저장합니다.
     return retrieved_docs
-    
 
 # 관련성 체크 노드
-def relevance_check(state: GraphState):
-    # 1. 관련성 평가기를 생성
+def relevance_check(state: QuestionState, key: str):
+    # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
         llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="question-retrieval"
     ).create()
 
-    # 2. 관련성 체크를 실행("yes" or "no")
+    # 관련성 체크를 실행("yes" or "no")
     response = question_answer_relevant.invoke(
-        {"question": state['final_question'], "context1": state['resume'], 'context2':state['evaluation']}
+        {"question": state['query_main'], "context1": state[key]}
     )
 
-    print("==== [RELEVANCE CHECK] ====")
+    print(f"==== [{key} CHECK] ====")
     print(response.score)
 
-    return {'relevance':response.score}
-
+    # 참고: 여기서의 관련성 평가기는 각자의 Prompt 를 사용하여 수정할 수 있습니다. 여러분들의 Groundedness Check 를 만들어 사용해 보세요!
+    return response.score
 
 # PydanticOutputParser
 class question(BaseModel):
@@ -96,7 +99,7 @@ class question(BaseModel):
     )
 
 # 결과 종합 노드
-def combine_prompt(state: GraphState, prompt: PromptTemplate):
+def combine_prompt(state: QuestionState, prompt: PromptTemplate):
     # State 변수 선언 지정
     job = state['job']
     resume = state['resume']
@@ -118,3 +121,20 @@ def combine_prompt(state: GraphState, prompt: PromptTemplate):
     question_score = answer_middle.interview
     
     return {'final_question':question_score}
+
+# 관련성 체크 노드
+def fact_checking(state: QuestionState):
+    # 1. 관련성 평가기를 생성
+    question_answer_relevant = GroundednessChecker(
+        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="fact-check"
+    ).create()
+
+    # 2. 관련성 체크를 실행("yes" or "no")
+    response = question_answer_relevant.invoke(
+        {"original_document_1": state['resume'], 'original_document_2':state['evaluation'],"question": state['final_question']}
+    )
+
+    print("==== [FACT CHECK] ====")
+    print(response.score)
+
+    return {'fact':response.score}
