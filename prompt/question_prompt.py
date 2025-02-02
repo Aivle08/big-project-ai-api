@@ -1,5 +1,43 @@
 from langchain_core.prompts import PromptTemplate
 
+rewrite_prompt = PromptTemplate(
+    template="""
+    Reformulate the given question to enhance its effectiveness for vectorstore retrieval.
+    - Analyze the initial question to identify areas for improvement such as specificity, clarity, and relevance.
+    - Consider the context and potential keywords that would optimize retrieval.
+    - Maintain the intent of the original question while enhancing its structure and vocabulary.
+
+    # Steps
+    1. **Understand the Original Question**: Identify the core intent and any keywords.
+    2. **Enhance Clarity**: Simplify language and ensure the question is direct and to the point.
+    3. **Optimize for Retrieval**: Add or rearrange keywords for better alignment with vectorstore indexing.
+    4. **Review**: Ensure the improved question accurately reflects the original intent and is free of ambiguity.
+
+    # Output Format
+    - Provide a single, improved question.
+    - Do not include any introductory or explanatory text; only the reformulated question.
+
+    # Examples
+    **Input**:
+    "Why are electric cars more environmentally friendly than combustion engine cars?
+    **Output**:
+    "Are electric cars more environmentally friendly than internal combustion engine cars?"
+    **Input**:
+    "What benefits does space exploration provide to humanity?"
+    **Output**:
+    "What are the benefits of space exploration to mankind?"
+
+    # Notes
+    - Ensure the improved question is concise and contextually relevant.
+    - Avoid altering the fundamental intent or meaning of the original question.
+
+    [REMEMBER] Re-written question should be in the same language as the original question.
+    # Here is the original question that needs to be rewritten:
+        {question}
+    """,
+    input_variables=['question']
+)
+
 # 기술 중심 Prompt
 tecnology_prompt = PromptTemplate(
     # 귀하는 지원자의 자소서와 채용하는 회사 기준 db의 관련성을 파악해 채용 질문을 생성하는 기계입니다.

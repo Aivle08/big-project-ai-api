@@ -11,6 +11,7 @@ from langchain_community.document_loaders import WebBaseLoader, PyMuPDFLoader
 from langchain_milvus import Milvus, Zilliz
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.documents import Document
 
 # Graph
@@ -48,7 +49,7 @@ def input(state: QuestionState):
 # 문서 검색 노드
 def retrieve_document(state: QuestionState, collection_name: str, class_id: str):
     # 질문을 상태에서 가져옵니다.
-    latest_question = state["query_main"]
+    latest_question = state[f"{collection_name}_query"]
     state_class_id = state[f'{class_id}']
     # Milvus vectorstore 설정
     vectorstore_resume = Milvus(
@@ -82,7 +83,7 @@ def relevance_check(state: QuestionState, key: str):
 
     # 관련성 체크를 실행("yes" or "no")
     response = question_answer_relevant.invoke(
-        {"question": state['query_main'], "context1": state[key]}
+        {"question": state[f'{key}_query'], "context1": state[key]}
     )
 
     print(f"==== [{key} CHECK] ====")
@@ -90,6 +91,20 @@ def relevance_check(state: QuestionState, key: str):
 
     # 참고: 여기서의 관련성 평가기는 각자의 Prompt 를 사용하여 수정할 수 있습니다. 여러분들의 Groundedness Check 를 만들어 사용해 보세요!
     return response.score
+
+def rewrite_question(state: QuestionState, prompt: PromptTemplate, collection_name: str):
+    # 1. 모델 선언
+    model = ChatOpenAI(model='gpt-4o', streaming=True)
+    
+    # 3. llm + PydanticOutputParser 바인딩 체인 생성
+    chain = prompt | model | StrOutputParser()
+
+    response = chain.invoke(
+        {"question": state[f'{collection_name}_query']}
+    )
+    
+    return response
+
 
 # PydanticOutputParser
 class question(BaseModel):
@@ -106,7 +121,7 @@ def combine_prompt(state: QuestionState, prompt: PromptTemplate):
     evaluation = state['evaluation']
     
     # 1. 모델 선언
-    model = ChatOpenAI(model='gpt-3.5-turbo', streaming=True)
+    model = ChatOpenAI(model='gpt-4o', streaming=True)
     
     # 2. 구조화된 출력을 위한 LLM 설정
     llm_with_tool = model.with_structured_output(question)

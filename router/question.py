@@ -17,12 +17,12 @@ from langgraph.checkpoint.memory import MemorySaver
 # State
 from state.question_state import QuestionState
 # Node
-from node.question_node import retrieve_document, relevance_check, combine_prompt, fact_checking, input
+from node.question_node import input, retrieve_document, relevance_check, combine_prompt, fact_checking, rewrite_question
 # etc
 from etc.etcc import is_relevant, is_fact
 from etc.graphs import visualize_graph
 from etc.messages import invoke_graph, random_uuid
-from prompt.question_prompt import tecnology_prompt, experience_prompt, work_prompt
+from prompt.question_prompt import tecnology_prompt, rewrite_prompt, experience_prompt, work_prompt
 #########################################################################################
 question = APIRouter(prefix='/question')
 
@@ -54,11 +54,18 @@ async def tech_prompt():
             lambda state: {"relevance_2": relevance_check(state, 'evaluation')},
         )
         workflow.add_node(
+            "rewrite_question_1",
+            lambda state: {"resume_query": rewrite_question(state, rewrite_prompt, 'resume')},
+        )
+        workflow.add_node(
+            "rewrite_question_2",
+            lambda state: {"evaluation_query": rewrite_question(state, rewrite_prompt, 'evaluation')},
+        )
+        workflow.add_node(
             "combine_prompt",
             lambda state: {"final_question": combine_prompt(state, tecnology_prompt)},
         )
         workflow.add_node("fact_checking", fact_checking)
-
         # 2. Edge 연결
         workflow.add_edge("input", "retrieve_1_document")
         workflow.add_edge("input", "retrieve_2_document")
@@ -71,19 +78,21 @@ async def tech_prompt():
             lambda state: is_relevant(state, key='relevance_1'),
             {
                 "relevant": "combine_prompt",  # 관련성이 있으면 답변을 생성합니다.
-                "not_relevant": "retrieve_1_document",  # 관련성이 없으면 다시 검색합니다.
+                "not_relevant": "rewrite_question_1",  # 관련성이 없으면 다시 검색합니다.
             },
         )
+        
         # 3. 조건부 엣지 추가
         workflow.add_conditional_edges(
             "relevance_check_2",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
             lambda state: is_relevant(state, key = 'relevance_2'),
             {
                 "relevant": "combine_prompt",  # 관련성이 있으면 답변을 생성합니다.
-                "not_relevant": "retrieve_2_document",  # 관련성이 없으면 다시 검색합니다.
+                "not_relevant": "rewrite_question_2",  # 관련성이 없으면 다시 검색합니다.
             },
         )
-        
+        workflow.add_edge("rewrite_question_1", "retrieve_1_document")
+        workflow.add_edge("rewrite_question_2", "retrieve_2_document")
     
         workflow.add_edge('combine_prompt','fact_checking')
         
@@ -120,7 +129,9 @@ async def tech_prompt():
                                 company_id = 1,
                                 applicant_id = 3,
                                 fact='yes',
-                                query_main=f'{input_job}의 기술 중심으로 생성해줘' )
+                                resume_query=f'{input_job}의 기술 중심으로 생성해줘',
+                                evaluation_query=f'{input_job}의 기술 중심으로 생성해줘',
+                                )
 
 
         # 10. 그래프 실행 출력
@@ -131,7 +142,8 @@ async def tech_prompt():
 
         print("===" * 20)
         print(f'job:\n{outputs["job"]}')
-        print(f'query_main:\n{outputs["query_main"]}')
+        print(f'resume_query:\n{outputs["resume_query"]}')
+        print(f'evaluation_query:\n{outputs["evaluation_query"]}')
         print(f'resume:\n{outputs["resume"]}')
         print(f'evaluation:\n{outputs["evaluation"]}')
         print(f'relevance_1:\n{outputs["relevance_1"]}')
