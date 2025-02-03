@@ -60,7 +60,7 @@ extraction_prompt = PromptTemplate(
     ### Output Format:
     Return your response strictly in this JSON format:
         {output_form}
-
+        
     ### Resume:
     {resume}
     """,

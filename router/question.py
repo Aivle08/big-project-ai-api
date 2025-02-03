@@ -130,8 +130,8 @@ async def tech_langgraph(item: TechDTO):
                                 company_id = item.company_id,
                                 applicant_id = item.applicant_id,
                                 fact='yes',
-                                resume_query=f'{item.input_job}의 기술 중심으로 생성해줘',
-                                evaluation_query=f'{item.input_job}의 기술 중심으로 생성해줘',
+                                resume_query=f'{item.job}의 기술 중심으로 생성해줘',
+                                evaluation_query=f'{item.job}의 기술 중심으로 생성해줘',
                                 )
 
 
