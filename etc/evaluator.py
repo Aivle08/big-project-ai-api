@@ -169,7 +169,9 @@ class GroundednessChecker:
             llm = self.llm.with_structured_output(GroundnessAnswerRetrievalScore)
         elif self.target == "question-answer":
             llm = self.llm.with_structured_output(GroundnessQuestionScore)
-        elif self.target == "question-retrieval":
+        elif self.target == "generate-question-retrieval":
+            llm = self.llm.with_structured_output(GroundnessQuestionRetrievalScore)
+        elif self.target == "summary-question-retrieval":
             llm = self.llm.with_structured_output(GroundnessQuestionRetrievalScore)
         elif self.target == "question-fact-check":
             llm = self.llm.with_structured_output(QuestionFactCheckScore)

@@ -78,7 +78,7 @@ def retrieve_document(state: QuestionState, collection_name: str, class_id: str)
 def relevance_check(state: QuestionState, key: str):
     # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="question-retrieval"
+        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="generate-question-retrieval"
     ).create()
 
     # 관련성 체크를 실행("yes" or "no")
@@ -141,7 +141,7 @@ def combine_prompt(state: QuestionState, prompt: PromptTemplate):
 def fact_checking(state: QuestionState):
     # 1. 관련성 평가기를 생성
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="fact-check"
+        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="question-fact-check"
     ).create()
 
     # 2. 관련성 체크를 실행("yes" or "no")
