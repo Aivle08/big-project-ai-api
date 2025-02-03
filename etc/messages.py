@@ -373,7 +373,7 @@ def stream_graph(
                 # 노드가 변경된 경우에만 구분선 출력
                 if curr_node != prev_node:
                     print("\n" + "=" * 50)
-                    print(f"🔄 Node: \033[1;36m{curr_node}\033[0m 🔄")
+                    print(f"🌈 Node: \033[1;36m{curr_node}\033[0m 🌈")
                     print("- " * 25)
                 print(chunk_msg.content, end="", flush=True)
 
@@ -384,7 +384,7 @@ def invoke_graph(
     graph: CompiledStateGraph,
     inputs: dict,
     config: RunnableConfig,
-    node_names: List[str] = [],
+    node_names: List[str] = [], 
     callback: Callable = None,
 ):
     """
@@ -422,10 +422,10 @@ def invoke_graph(
                 print("\n" + "=" * 50)
                 formatted_namespace = format_namespace(namespace)
                 if formatted_namespace == "root graph":
-                    print(f"🔄 Node: \033[1;36m{node_name}\033[0m 🔄")
+                    print(f"☃️  Node: \033[1;36m{node_name}\033[0m ☃️")
                 else:
                     print(
-                        f"🔄 Node: \033[1;36m{node_name}\033[0m in [\033[1;33m{formatted_namespace}\033[0m] 🔄"
+                        f"💥 Node: \033[1;36m{node_name}\033[0m in [\033[1;33m{formatted_namespace}\033[0m] 💥"
                     )
                 print("- " * 25)
 

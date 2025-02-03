@@ -112,20 +112,27 @@ class GroundnessAnswerRetrievalScore(BaseModel):
         description="relevant or not relevant. Answer 'yes' if the answer is relevant to the retrieved document else answer 'no'"
     )
 
-
 class GroundnessQuestionRetrievalScore(BaseModel):
     """Binary scores for relevance checks"""
 
     score: str = Field(
         description="relevant or not relevant. Answer 'yes' if the question is relevant to the retrieved document else answer 'no'"
     )
+    
+class SummaryFactCheckScore(BaseModel):
+    """Binary scores for factual accuracy checks between original and summarized documents"""
 
+    score: str = Field(
+        description="Answer 'yes' if the summarized document is factually correct and accurately represents the content of the original document, otherwise answer 'no'."
+    )
+    
 class QuestionFactCheckScore(BaseModel):
     """Binary scores for fact checks between question and retriever documents"""
 
     score: str = Field(
         description="fact or not fact. Answer 'Yes' if the generated question is factually correct and accurately indicates the content of the original document, else answer 'no'"
     )
+
 
 class GroundednessChecker:
     """
@@ -164,8 +171,10 @@ class GroundednessChecker:
             llm = self.llm.with_structured_output(GroundnessQuestionScore)
         elif self.target == "question-retrieval":
             llm = self.llm.with_structured_output(GroundnessQuestionRetrievalScore)
-        elif self.target == "fact-check":
+        elif self.target == "question-fact-check":
             llm = self.llm.with_structured_output(QuestionFactCheckScore)
+        elif self.target == "summary-fact-check":
+            llm = self.llm.with_structured_output(SummaryFactCheckScore)
         else:
             raise ValueError(f"Invalid target: {self.target}")
 
@@ -189,7 +198,19 @@ class GroundednessChecker:
                 Give a binary score 'yes' or 'no' score to indicate whether the answer is relevant to the question."""
             input_vars = ["question", "answer"]
 
-        elif self.target == "question-retrieval":
+        elif self.target == "generate-question-retrieval":
+            template = """
+            You are a scorer who assesses whether a searched document is related to a given question.
+            Here is the question: \n\n {question} \n\n
+            Here is the retrieved document: \n\n {context1} \n
+            You should also assess whether the retrieved document contains accurate information about the question,
+            or if LLM is likely to hallucinate content that is not in the document.
+            
+            Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question.
+            """
+            input_vars = ["question", "context1"]
+            
+        elif self.target == "summary-question-retrieval":
             template = """You are a grader assessing whether a retrieved document is relevant to the given question. \n
                 Here is the question: \n\n {question} \n\n
                 Here is the retrieved document: \n\n {context1} \n
@@ -198,14 +219,35 @@ class GroundednessChecker:
                 
                 Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question."""
             input_vars = ["question", "context1"]
+        
+        elif self.target == "question-fact-check":
+            # 당신은 평가 기준에 지원자의 자기소개서 내용이 포함되어 있는지, 그리고 포함된 내용이 사실인지를 판단하기 위해 설계된 기계입니다.
+
+            # 다음은 지원자의 자기소개서입니다:\n\n {오리지널_document} \n\n
+            # 평가 기준은 다음과 같습니다:\n\n {eval_document} \n
+
+            # ## 지침:
+            # 1. 제공된 평가 기준에 지원자의 자기소개서에서 파생된 내용이 포함되어 있는지 평가합니다.
+            # 2. 평가 근거에 자기소개서에 사실적이고 진실한 내용이 포함된 경우 "예"로 응답하세요.
+            # 3. 평가 기준에 자기소개서의 내용이 포함되어 있지만 허위 또는 오해의 소지가 있는 정보가 포함된 경우 "아니오"로 응답합니다.
+            # 4. 평가 기준에 자기소개서의 내용이 포함되지 않은 경우 "아니오"로 응답합니다.
+            # 5. 평가 기준과 지원자의 자기소개서 내용 간의 사실적 일치에만 집중하세요.
+            template = """
+            You are a machine designed to determine whether the evaluation basis includes content from the applicant's cover letter and if the included content is factual.
+
+            Here is the applicant's cover letter: \n\n {original_document} \n\n
+            Here is the evaluation basis: \n\n {eval_document} \n
             
-            # You are a grader assessing whether a generated question is factually correct when compared to the original documents. \n
-            # Here are the original documents: \n\n {original_document_1} \n\n {original_document_2} \n
-            # Here is the generated question: \n\n {question} \n
-            # Your mission is to compare the generated question with the original documents and ensure that the question accurately reflects the facts in the original documents. \n
-            # - If the question is factually correct and accurately indicates the content of the original documents, grade it as 'yes'. \n
-            # - If the question contains inaccurate or misleading information that contradicts the original documents, grade it as 'no'.
-        elif self.target == "fact-check":
+            ## Instructions:
+            1. Evaluate whether the provided evaluation basis contains content derived from the applicant's cover letter.
+            2. If the evaluation basis includes factual and truthful content from the cover letter, respond with "yes".
+            3. If the evaluation basis includes content from the cover letter but contains false or misleading information, respond with "no".
+            4. If the evaluation basis does not include any content from the cover letter, respond with "no".
+            5. Focus solely on the factual alignment between the evaluation basis and the content in the applicant's cover letter.
+            """
+            input_vars = ["original_document", "eval_document"]
+
+        elif self.target == "summary-fact-check":
             template = """
             You are a grader assessing whether a retrieved document is relevant to the given question. \n
             Here are the original documents: \n\n {original_document_1} \n\n {original_document_2} \n
@@ -216,6 +258,7 @@ class GroundednessChecker:
             Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question
             """
             input_vars = ["original_document_1", "original_document_2", "question"]
+
 
         else:
             raise ValueError(f"Invalid target: {self.target}")

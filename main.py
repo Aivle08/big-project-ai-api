@@ -12,6 +12,7 @@ from fastapi import FastAPI, HTTPException, Depends, status
 
 # Module
 from router.question import question
+from router.score import score
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -40,6 +41,8 @@ def say_hello():
 # 질문 모델
 app.include_router(question)
 
+# 요약 모델
+app.include_router(score)
 
 print(f'Documents: http://localhost:8000/docs')
 
