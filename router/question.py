@@ -17,9 +17,9 @@ from langgraph.checkpoint.memory import MemorySaver
 # State
 from state.question_state import QuestionState
 # Node
-from node.question_node import input, retrieve_document, relevance_check, combine_prompt, fact_checking, rewrite_question
+from node.question_node import input, retrieve_document, relevance_check, combine_prompt, fact_checking, rewrite_question, experience_relevance_check
 # etc
-from etc.etcc import is_relevant, is_fact
+from etc.etcc import question_is_relevant, question_is_fact
 from etc.graphs import visualize_graph
 from etc.messages import invoke_graph, random_uuid
 from prompt.question_prompt import tecnology_prompt, rewrite_prompt, experience_prompt, work_prompt
@@ -28,7 +28,7 @@ question = APIRouter(prefix='/question')
 
 # 기술 중심 Prompt
 @question.post("/tech", status_code = status.HTTP_200_OK, tags=['question'])
-async def tech_prompt():
+async def tech_langgraph():
     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
     try:
         workflow = StateGraph(QuestionState)
@@ -75,7 +75,7 @@ async def tech_prompt():
         # 3. 조건부 엣지 추가
         workflow.add_conditional_edges(
             "relevance_check_1",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
-            lambda state: is_relevant(state, key='relevance_1'),
+            lambda state: question_is_relevant(state, key='relevance_1'),
             {
                 "relevant": "combine_prompt",  # 관련성이 있으면 답변을 생성합니다.
                 "not_relevant": "rewrite_question_1",  # 관련성이 없으면 다시 검색합니다.
@@ -85,7 +85,7 @@ async def tech_prompt():
         # 3. 조건부 엣지 추가
         workflow.add_conditional_edges(
             "relevance_check_2",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
-            lambda state: is_relevant(state, key = 'relevance_2'),
+            lambda state: question_is_relevant(state, key = 'relevance_2'),
             {
                 "relevant": "combine_prompt",  # 관련성이 있으면 답변을 생성합니다.
                 "not_relevant": "rewrite_question_2",  # 관련성이 없으면 다시 검색합니다.
@@ -99,7 +99,7 @@ async def tech_prompt():
         # 3. 조건부 엣지 추가
         workflow.add_conditional_edges(
             "fact_checking",  # 관련성 체크 노드에서 나온 결과를 is_fact 함수에 전달합니다.
-            is_fact,
+            question_is_fact,
             {
                 "fact": END,  # 관련성이 있으면 답변을 생성합니다.
                 "not_fact": "combine_prompt",  # 관련성이 없으면 다시 검색합니다.
@@ -161,7 +161,7 @@ async def tech_prompt():
             
 # 경험 중심 Prompt
 @question.post("/experience", status_code = status.HTTP_200_OK, tags=['question'])
-async def experience_prompt():
+def experience_langgraph():
     print('\n\033[36m[AI-API] \033[32m 질문 추출(경험)')
     try:
         workflow = StateGraph(QuestionState)
@@ -171,7 +171,11 @@ async def experience_prompt():
             "retrieve_1_document",
             lambda state: {"resume": retrieve_document(state, "resume", 'applicant_id')},
         )
-        workflow.add_node("relevance_check", relevance_check)
+        ## Relevance
+        workflow.add_node(
+            "relevance_check",
+            lambda state: {"relevance_1": experience_relevance_check(state, 'resume')},
+        )
         workflow.add_node(
             "combine_prompt",
             lambda state: {"final_question": combine_prompt(state, experience_prompt)},
@@ -184,7 +188,7 @@ async def experience_prompt():
         # 3. 조건부 엣지 추가
         workflow.add_conditional_edges(
             "relevance_check",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
-            is_relevant,
+            lambda state: question_is_relevant(state, 'relevance_1'),
             {
                 "relevant": END,  # 관련성이 있으면 답변을 생성합니다.
                 "not_relevant": "combine_prompt",  # 관련성이 없으면 다시 검색합니다.
@@ -279,7 +283,7 @@ async def experience_prompt():
                                             경험.
                                             • 대외활동 경험: IT 관련 경진대회, 공모전, 세미나 참여 등 ICT 관련
                                             산업에 대한 이해를 증명할 수 있는 경험""",
-                            query_main=f'{input_job}의 기술 중심으로 생성해줘' )
+                            resume_query=f'{input_job}의 기술 중심으로 생성해줘' )
 
 
         # 그래프 실행
@@ -290,10 +294,10 @@ async def experience_prompt():
 
         print("===" * 20)
         print(f'job:\n{outputs["job"]}')
-        print(f'query_main:\n{outputs["query_main"]}')
+        print(f'resume_query:\n{outputs["resume_query"]}')
         print(f'resume:\n{outputs["resume"]}')
         print(f'evaluation:\n{outputs["evaluation"]}')
-        print(f'relevance:\n{outputs["relevance"]}')
+        print(f'relevance_1:\n{outputs["relevance_1"]}')
         print(f'final_question:\n{outputs["final_question"]}')
         
         return outputs["final_question"]
@@ -306,7 +310,7 @@ async def experience_prompt():
             
 # 경력 중심 Prompt
 @question.post("/work", status_code = status.HTTP_200_OK, tags=['question'])
-async def work_prompt():
+def work_langgraph():
     print('\n\033[36m[AI-API] \033[32m 질문 추출(경력)')
     try:
         workflow = StateGraph(QuestionState)
@@ -316,7 +320,10 @@ async def work_prompt():
             "retrieve_1_document",
             lambda state: {"resume": retrieve_document(state, "resume", 'applicant_id')},
         )
-        workflow.add_node("relevance_check", relevance_check)
+        workflow.add_node(
+            "relevance_check",
+            lambda state: {"relevance_1": experience_relevance_check(state, 'resume')},
+        )
         workflow.add_node(
             "combine_prompt",
             lambda state: {"final_question": combine_prompt(state, work_prompt)},
@@ -329,7 +336,7 @@ async def work_prompt():
         # 3. 조건부 엣지 추가
         workflow.add_conditional_edges(
             "relevance_check",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
-            is_fact,
+            lambda state: question_is_relevant(state, 'relevance_1'),
             {
                 "relevant": END,  # 관련성이 있으면 답변을 생성합니다.
                 "not_relevant": "combine_prompt",  # 관련성이 없으면 다시 검색합니다.
@@ -424,7 +431,7 @@ async def work_prompt():
                                             경험.
                                             • 대외활동 경험: IT 관련 경진대회, 공모전, 세미나 참여 등 ICT 관련
                                             산업에 대한 이해를 증명할 수 있는 경험""",
-                            query_main=f'경력 사항, 인턴 및 대외활동' )
+                            resume_query=f'경력 사항, 인턴 및 대외활동')
 
         # 그래프 실행
         invoke_graph(app, inputs, config)
@@ -434,10 +441,10 @@ async def work_prompt():
 
         print("===" * 20)
         print(f'job:\n{outputs["job"]}')
-        print(f'query_main:\n{outputs["query_main"]}')
+        print(f'resume_query:\n{outputs["resume_query"]}')
         print(f'resume:\n{outputs["resume"]}')
         print(f'evaluation:\n{outputs["evaluation"]}')
-        print(f'relevance:\n{outputs["relevance"]}')
+        print(f'relevance_1:\n{outputs["relevance_1"]}')
         print(f'final_question:\n{outputs["final_question"]}')
         
         return outputs["final_question"]

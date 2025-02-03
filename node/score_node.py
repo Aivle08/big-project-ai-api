@@ -1,30 +1,18 @@
 ################################################## LIBRARY #########################################################
 # Basic
-import pandas as pd
-import numpy as np
 import os
 import openai
 from dotenv import load_dotenv
 
 # Chain
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import WebBaseLoader, PyMuPDFLoader
 from langchain_milvus import Milvus
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.documents import Document
-
-# Graph
-from langgraph.graph import END, StateGraph
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.errors import GraphRecursionError
 
 # Tool
 from pydantic import BaseModel, Field
 
 # DB
-from pymilvus import Collection, connections
 from typing import TypedDict, Annotated, List,Dict, Any
 
 # Error
@@ -34,8 +22,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 # Module
 from state.score_state import ScoreState
 from etc.evaluator import GroundednessChecker
-from etc.graphs import visualize_graph
-from etc.etcc import format_docs, is_fact
+from etc.etcc import format_docs
 ####################################################################################################################
 ################################################### STATE ########################################################### 청크 합치기
 # 환경설정
@@ -83,7 +70,7 @@ def retrieve_document(state: ScoreState, collection_name: str, class_id: str):
 def relevance_check(state: ScoreState):
     # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="summary-question-retrieval"
+        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="score-question-retrieval"
     ).create()
 
     # 관련성 체크를 실행("yes" or "no")
@@ -139,7 +126,7 @@ def score_resume(state: ScoreState, prompt: PromptTemplate):
 def fact_checking(state: ScoreState):
     # 1. 관련성 평가기를 생성
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="summary-fact-check"
+        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="score-fact-check"
     ).create()
 
     print('='*30,state['eval_resume']['eval_resume'][1])

@@ -1,23 +1,14 @@
 ################################################## LIBRARY #########################################################
 # Basic
-import pandas as pd
-import numpy as np
 import os
 import openai
 from dotenv import load_dotenv
+
 # Chain
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import WebBaseLoader, PyMuPDFLoader
-from langchain_milvus import Milvus, Zilliz
+from langchain_milvus import Milvus
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.documents import Document
-
-# Graph
-from langgraph.graph import END, StateGraph
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.errors import GraphRecursionError
 
 # Tool
 from pydantic import BaseModel, Field
@@ -32,8 +23,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 # Module
 from state.question_state import QuestionState
 from etc.evaluator import GroundednessChecker
-from etc.graphs import visualize_graph
-from etc.etcc import format_docs, is_relevant
+from etc.etcc import format_docs
 ####################################################################################################################
 ################################################### STATE ########################################################### 청크 합치기
 # 환경설정
@@ -74,11 +64,29 @@ def retrieve_document(state: QuestionState, collection_name: str, class_id: str)
     # 검색된 문서를 context 키에 저장합니다.
     return retrieved_docs
 
-# 관련성 체크 노드
+# 기술 중심 자소서 관련성 체크 노드
 def relevance_check(state: QuestionState, key: str):
     # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
         llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="generate-question-retrieval"
+    ).create()
+
+    # 관련성 체크를 실행("yes" or "no")
+    response = question_answer_relevant.invoke(
+        {"question": state[f'{key}_query'], "context1": state[key]}
+    )
+
+    print(f"==== [{key} CHECK] ====")
+    print(response.score)
+
+    # 참고: 여기서의 관련성 평가기는 각자의 Prompt 를 사용하여 수정할 수 있습니다. 여러분들의 Groundedness Check 를 만들어 사용해 보세요!
+    return response.score
+
+# 경험 중심 자소서 관련성 체크 노드
+def experience_relevance_check(state: QuestionState, key: str):
+    # 관련성 평가기를 생성합니다.
+    question_answer_relevant = GroundednessChecker(
+        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="score-question-retrieval"
     ).create()
 
     # 관련성 체크를 실행("yes" or "no")

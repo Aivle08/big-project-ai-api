@@ -171,10 +171,14 @@ class GroundednessChecker:
             llm = self.llm.with_structured_output(GroundnessQuestionScore)
         elif self.target == "generate-question-retrieval":
             llm = self.llm.with_structured_output(GroundnessQuestionRetrievalScore)
-        elif self.target == "summary-question-retrieval":
+        elif self.target == "score-question-retrieval":
             llm = self.llm.with_structured_output(GroundnessQuestionRetrievalScore)
         elif self.target == "question-fact-check":
             llm = self.llm.with_structured_output(QuestionFactCheckScore)
+        elif self.target == "score-fact-check":
+            llm = self.llm.with_structured_output(SummaryFactCheckScore)
+        elif self.target == "summary-question-retrieval":
+            llm = self.llm.with_structured_output(GroundnessQuestionRetrievalScore)
         elif self.target == "summary-fact-check":
             llm = self.llm.with_structured_output(SummaryFactCheckScore)
         else:
@@ -207,12 +211,12 @@ class GroundednessChecker:
             Here is the retrieved document: \n\n {context1} \n
             You should also assess whether the retrieved document contains accurate information about the question,
             or if LLM is likely to hallucinate content that is not in the document.
-            
+                
             Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question.
             """
             input_vars = ["question", "context1"]
             
-        elif self.target == "summary-question-retrieval":
+        elif self.target == "score-question-retrieval":
             template = """You are a grader assessing whether a retrieved document is relevant to the given question. \n
                 Here is the question: \n\n {question} \n\n
                 Here is the retrieved document: \n\n {context1} \n
@@ -222,7 +226,17 @@ class GroundednessChecker:
                 Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question."""
             input_vars = ["question", "context1"]
         
-        elif self.target == "question-fact-check":
+        elif self.target == "summary-question-retrieval":
+            template = """You are a grader assessing whether a retrieved document is relevant to the given question. \n
+                Here is the question: \n\n {question} \n\n
+                Here is the retrieved document: \n\n {context1},{context2} \n
+                If the document contains information that could help answer the question, grade it as relevant. \n
+                Consider both semantic meaning and potential usefulness for answering the question. \n
+                
+                Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question."""
+            input_vars = ["question", "context1",'context2']
+                    
+        elif self.target == "score-fact-check":
             # 당신은 평가 기준에 지원자의 자기소개서 내용이 포함되어 있는지, 그리고 포함된 내용이 사실인지를 판단하기 위해 설계된 기계입니다.
 
             # 다음은 지원자의 자기소개서입니다:\n\n {오리지널_document} \n\n
@@ -249,7 +263,7 @@ class GroundednessChecker:
             """
             input_vars = ["original_document", "eval_document"]
 
-        elif self.target == "summary-fact-check":
+        elif self.target == "question-fact-check":
             template = """
             You are a grader assessing whether a retrieved document is relevant to the given question. \n
             Here are the original documents: \n\n {original_document_1} \n\n {original_document_2} \n
@@ -260,7 +274,20 @@ class GroundednessChecker:
             Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question
             """
             input_vars = ["original_document_1", "original_document_2", "question"]
+            
+        
+        elif self.target == "summary-fact-check":
+            template = """
+            You are tasked with checking whether the summarized document is factually correct compared to the original document.
 
+            Here is the original document:  {original_document}
+            Here is the summarized document: {summarized_document}
+
+            Your task is to compare the two documents and determine if the summary accurately reflects the facts in the original document.
+            - If the summary is factually correct and accurately represents the content of the original document, return 'yes'.
+            - If the summary contains any incorrect or misleading information that contradicts the original document, return 'no'.
+            """
+            input_vars = ["original_document", "summarized_document"]
 
         else:
             raise ValueError(f"Invalid target: {self.target}")

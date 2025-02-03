@@ -11,9 +11,9 @@ from fastapi import FastAPI, HTTPException, Depends, status
 #from sqlalchemy.orm import Session
 
 # Module
+from router.summary import summary
 from router.question import question
 from router.score import score
-
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
@@ -43,6 +43,10 @@ app.include_router(question)
 
 # 요약 모델
 app.include_router(score)
+
+# 요약 모델
+app.include_router(summary)
+
 
 print(f'Documents: http://localhost:8000/docs')
 

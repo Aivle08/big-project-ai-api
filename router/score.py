@@ -19,7 +19,7 @@ from state.score_state import ScoreState
 # Node
 from node.score_node import retrieve_document, score_resume, fact_checking, relevance_check
 # etc
-from etc.etcc import is_fact, is_relevant
+from etc.etcc import score_is_fact, score_is_relevant
 from etc.graphs import visualize_graph
 from etc.messages import invoke_graph, random_uuid
 from prompt.score_prompt import score_prompt
@@ -52,14 +52,14 @@ def summary_graph():
         #3. 조건부 엣지 추가
         workflow.add_conditional_edges(
             "relevance_check",  # 사실 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
-            is_relevant,
+            score_is_relevant,
             {"relevant": 'score_resume',
             "not_relevant": "retrieve_document",  # 사실이 아니면 다시 요약합니다.
             },
         )
         workflow.add_conditional_edges(
             "fact_checking",  # 사실 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
-            is_fact,
+            score_is_fact,
             {"fact": END,
             "not_fact": "score_resume",  # 사실이 아니면 다시 요약합니다.
             },
