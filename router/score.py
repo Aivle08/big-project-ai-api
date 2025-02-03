@@ -28,7 +28,7 @@ score = APIRouter(prefix='/score')
 
 # 요약 Prompt
 @score.post("", status_code = status.HTTP_200_OK, tags=['score'])
-def summary_graph():
+def summary_graph(input_job: str, input_eval_item: str, input_eval_item_content: str, input_applicant_id: int):
     print('\n\033[36m[AI-API] \033[32m 점수 측정')
     try:
         workflow = StateGraph(ScoreState)
@@ -80,7 +80,6 @@ def summary_graph():
         # 8. config 설정(재귀 최대 횟수, thread_id)
         config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
 
-        input_job = 'IT영업'
         input_eval_item = '인재상'
         input_eval_item_content = """
         인재상
@@ -119,8 +118,9 @@ def summary_graph():
 
         # 9. 질문 입력
         input_job = 'IT영업'
+        input_applicant_id = 1
         inputs = ScoreState(job=input_job, 
-                            applicant_id = 1,
+                            applicant_id = input_applicant_id,
                             eval_item = input_eval_item,
                             eval_item_content = input_eval_item_content,
                             query_main=f'{input_job} 직무에 대한 {input_eval_item} 뽑아주세요.')

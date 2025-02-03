@@ -28,7 +28,7 @@ question = APIRouter(prefix='/question')
 
 # 기술 중심 Prompt
 @question.post("/tech", status_code = status.HTTP_200_OK, tags=['question'])
-async def tech_langgraph():
+async def tech_langgraph(input_job: str, input_company_id: int, input_applicant_id: int):
     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
     try:
         workflow = StateGraph(QuestionState)
@@ -125,9 +125,11 @@ async def tech_langgraph():
 
         # 9. 질문 입력
         input_job = 'IT영업'
+        input_company_id = 1
+        input_applicant_id = 2
         inputs = QuestionState(job=input_job, 
-                                company_id = 1,
-                                applicant_id = 3,
+                                company_id = input_company_id,
+                                applicant_id = input_applicant_id,
                                 fact='yes',
                                 resume_query=f'{input_job}의 기술 중심으로 생성해줘',
                                 evaluation_query=f'{input_job}의 기술 중심으로 생성해줘',
@@ -161,7 +163,7 @@ async def tech_langgraph():
             
 # 경험 중심 Prompt
 @question.post("/experience", status_code = status.HTTP_200_OK, tags=['question'])
-def experience_langgraph():
+def experience_langgraph(input_job: str, input_company_id: int, input_applicant_id: int):
     print('\n\033[36m[AI-API] \033[32m 질문 추출(경험)')
     try:
         workflow = StateGraph(QuestionState)
@@ -210,11 +212,12 @@ def experience_langgraph():
         config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
 
         input_job = 'IT영업'
-
+        input_company_id = 1
+        input_applicant_id = 2
         # 질문 입력
         inputs = QuestionState(job=input_job, 
-                            company_id = 1,
-                            applicant_id = 1,
+                            company_id = input_company_id,
+                            applicant_id = input_applicant_id,
                             evaluation = """5. 공고
                                             수행업무
                                             • 대기업/중견기업 고객 대상 ICT 관련 영업활동
@@ -310,7 +313,7 @@ def experience_langgraph():
             
 # 경력 중심 Prompt
 @question.post("/work", status_code = status.HTTP_200_OK, tags=['question'])
-def work_langgraph():
+def work_langgraph(input_job: str, input_company_id: int, input_applicant_id: int):
     print('\n\033[36m[AI-API] \033[32m 질문 추출(경력)')
     try:
         workflow = StateGraph(QuestionState)
@@ -358,11 +361,12 @@ def work_langgraph():
         config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
 
         input_job = 'IT영업'
-
+        input_company_id = 1
+        input_applicant_id = 2
         # 질문 입력
         inputs = QuestionState(job=input_job, 
-                            company_id = 1,
-                            applicant_id = 1,
+                            company_id = input_company_id,
+                            applicant_id = input_applicant_id,
                             evaluation = """5. 공고
                                             수행업무
                                             • 대기업/중견기업 고객 대상 ICT 관련 영업활동

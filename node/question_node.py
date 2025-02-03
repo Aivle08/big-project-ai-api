@@ -31,7 +31,7 @@ load_dotenv()
 
 openai.api_key = os.getenv('OPENAI_API_KEY')
 embeddings = OpenAIEmbeddings()
-    
+
 # Input 노드 정의
 def input(state: QuestionState):
     return state

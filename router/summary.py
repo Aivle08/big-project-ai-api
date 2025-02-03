@@ -28,7 +28,7 @@ summary = APIRouter(prefix='/summary')
 
 # 요약 Prompt
 @summary.post("", status_code = status.HTTP_200_OK, tags=['summary'])
-def summary_graph():
+def summary_graph(input_job: str, input_applicant_id: int):
     print('\n\033[36m[AI-API] \033[32m 자소서 요약')
     try:
         workflow = StateGraph(SummaryState)
@@ -75,8 +75,9 @@ def summary_graph():
 
         # 9. 질문 입력
         input_job = 'IT영업'
+        input_applicant_id = 1
         inputs = SummaryState(job=input_job, 
-                            applicant_id = 1)
+                            applicant_id = input_applicant_id)
 
         # 10. 그래프 실행 출력
         invoke_graph(app, inputs, config)
@@ -102,7 +103,7 @@ def summary_graph():
 
 # 요약 Prompt
 @summary.post("/extraction", status_code = status.HTTP_200_OK, tags=['summary'])
-def tech_prompt():
+def tech_prompt(input_applicant_id: int):
     print('\n\033[36m[AI-API] \033[32m 자소서 인적사항')
     try:
         workflow = StateGraph(extractionState)
@@ -156,10 +157,10 @@ def tech_prompt():
             }
         }
         """
-
+        input_applicant_id = 1
         # 질문 입력
         inputs = extractionState(
-            applicant_id = 1,
+            applicant_id = input_applicant_id,
             query_main=f'이력서 요약을 해주세요.',
             output_form=input_output_form)
 
