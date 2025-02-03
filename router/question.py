@@ -152,7 +152,12 @@ async def tech_langgraph(item: TechDTO):
         print(f'fact:\n{outputs["fact"]}')
         print(f'final_question:\n{outputs["final_question"]}')
         
-        return outputs["final_question"]
+        return {
+            "status": "success",  # 응답 상태
+            "code": 200,  # HTTP 상태 코드
+            "message": "질문 생성 완료",  # 응답 메시지
+            'item': outputs["final_question"]
+        }
     except Exception as e:
             traceback.print_exc()
             return {
@@ -232,7 +237,12 @@ def experience_langgraph(item: Experience_WorkDTO):
         print(f'relevance_1:\n{outputs["relevance_1"]}')
         print(f'final_question:\n{outputs["final_question"]}')
         
-        return outputs["final_question"]
+        return {
+            "status": "success",  # 응답 상태
+            "code": 200,  # HTTP 상태 코드
+            "message": "질문 생성 완료",  # 응답 메시지
+            'item': outputs["final_question"]
+        }
     except Exception as e:
             traceback.print_exc()
             return {
@@ -310,7 +320,12 @@ def work_langgraph(item: Experience_WorkDTO):
         print(f'relevance_1:\n{outputs["relevance_1"]}')
         print(f'final_question:\n{outputs["final_question"]}')
         
-        return outputs["final_question"]
+        return {
+            "status": "success",  # 응답 상태
+            "code": 200,  # HTTP 상태 코드
+            "message": "질문 생성 완료",  # 응답 메시지
+            'item': outputs["final_question"]
+        }
     except Exception as e:
             traceback.print_exc()
             return {

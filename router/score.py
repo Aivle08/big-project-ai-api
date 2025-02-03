@@ -104,8 +104,13 @@ def summary_graph(item: ScoreDTO):
         print(f'eval_resume:\n{outputs["eval_resume"]}')
         
         return {
-            f'{item.eval_item}':int(outputs["eval_resume"]["eval_resume"][0]),
-            f'{item.eval_item}평가이유':outputs["eval_resume"]["eval_resume"][1]
+            "status": "success",  # 응답 상태
+            "code": 200,  # HTTP 상태 코드
+            "message": "질문 측정 완료",  # 응답 메시지
+            'item':{
+                f'{item.eval_item}':int(outputs["eval_resume"]["eval_resume"][0]),
+                f'{item.eval_item}평가이유':outputs["eval_resume"]["eval_resume"][1]
+            }
         }
     except Exception as e:
             traceback.print_exc()

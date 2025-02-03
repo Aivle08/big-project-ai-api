@@ -92,7 +92,12 @@ def summary_graph(item: SummaryDTO):
         print(f'yes_or_no:\n{outputs["yes_or_no"]}')
         print(f'summary_result:\n{outputs["summary_result"]}')
         
-        return outputs["summary_result"]
+        return {
+            "status": "success",  # 응답 상태
+            "code": 200,  # HTTP 상태 코드
+            "message": "자소서 DB 추출 완료",  # 응답 메시지 
+            "item" : outputs["summary_result"]
+        }
     except Exception as e:
             traceback.print_exc()
             return {
@@ -143,18 +148,7 @@ def tech_prompt(item: ExtractionDTO):
             "email": ,
             "birth": ,
             "address": ,
-            "else_summary": {
-                "university": ,
-                "major": ,
-                "second_major": ,
-                "score": ,
-                "경력": [
-                ],
-                "자격증/어학": [
-                ],
-                "대외활동 및 기타": [
-                ],
-            }
+            "else_summary":
         }
         """
 
@@ -173,7 +167,12 @@ def tech_prompt(item: ExtractionDTO):
         print("===" * 20)
         print(f'final_result:\n{outputs["final_result"]}')
         
-        return outputs["final_result"]
+        return {
+            "status": "success",  # 응답 상태
+            "code": 200,  # HTTP 상태 코드
+            "message": "자소서 DB 추출 완료",  # 응답 메시지 
+            "item": outputs["final_result"]
+        }
     except Exception as e:
             traceback.print_exc()
             return {
