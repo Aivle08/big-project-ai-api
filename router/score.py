@@ -17,7 +17,7 @@ from langgraph.checkpoint.memory import MemorySaver
 # State
 from state.score_state import ScoreState
 # Node
-from node.score_node import retrieve_document, score_resume, fact_checking, relevance_check
+from node.score_node import retrieve_document, score_resume, fact_checking, relevance_check, no_relevance
 # etc
 from etc.etcc import score_is_fact, score_is_relevant
 from etc.graphs import visualize_graph
@@ -45,10 +45,12 @@ def summary_graph(item: ScoreDTO):
             lambda state: {"eval_resume": score_resume(state, score_prompt)},
         )
         workflow.add_node("relevance_check", relevance_check)
+        workflow.add_node("no_relevance", no_relevance)
         workflow.add_node("fact_checking", fact_checking)
         
         # 2. Edge 연결
         workflow.add_edge('retrieve_document','relevance_check')
+        workflow.add_edge('no_relevance',END)
         workflow.add_edge('score_resume','fact_checking')
         
         #3. 조건부 엣지 추가
@@ -56,14 +58,14 @@ def summary_graph(item: ScoreDTO):
             "relevance_check",  # 사실 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
             score_is_relevant,
             {"relevant": 'score_resume',
-            "not_relevant": "retrieve_document",  # 사실이 아니면 다시 요약합니다.
+            "not_relevant": 'no_relevance',  # 관련이 없으면 0점입니다.
             },
         )
         workflow.add_conditional_edges(
             "fact_checking",  # 사실 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
             score_is_fact,
             {"fact": END,
-            "not_fact": "score_resume",  # 사실이 아니면 다시 요약합니다.
+            "not_fact": "score_resume",  # 사실이 아니면 다시 평가합니다.
             },
         )
 
@@ -81,14 +83,13 @@ def summary_graph(item: ScoreDTO):
             
         # 8. config 설정(재귀 최대 횟수, thread_id)
         config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
-
         
         # 9. 질문 입력
-        inputs = ScoreState(job = item.job, 
+        inputs = ScoreState(job = item.job,
                             applicant_id = item.applicant_id,
                             eval_item = item.eval_item,
                             eval_item_content = item.eval_item_content,
-                            query_main=f'{item.job} 직무에 대한 {item.eval_item} 뽑아주세요.')
+                            query_main=f"저는 {item.job} 직무를 수행할 지원자의 {item.eval_item}에 대해 분석하고 싶습니다. 이 기준에 맞는 지원자의 자소서 내용을 뽑아주세요.")
 
         # 10. 그래프 실행 출력
         invoke_graph(app, inputs, config)
@@ -100,7 +101,8 @@ def summary_graph(item: ScoreDTO):
         print(f'job:\n{outputs["job"]}')
         print(f'applicant_id:\n{outputs["applicant_id"]}')
         print(f'resume:\n{outputs["resume"]}')
-        #print(f'yes_or_no:\n{outputs["yes_or_no"]}')
+        print(f'eval_item:\n{outputs["eval_item"]}')
+        print(f'eval_item_content:\n{outputs["eval_item_content"]}')
         print(f'eval_resume:\n{outputs["eval_resume"]}')
         
         return {

@@ -25,7 +25,7 @@ from state.summary_state import SummaryState, extractionState
 from etc.evaluator import GroundednessChecker
 from etc.etcc import format_docs
 ####################################################################################################################
-################################################### STATE ########################################################### 청크 합치기
+################################################### STATE ##########################################################
 # 환경설정
 load_dotenv()
 
@@ -58,7 +58,6 @@ def resume_load(state: SummaryState, collection_name: str, class_id: str):
     
     # 검색된 문서를 context 키에 저장합니다.
     return text
-    
 
 # PydanticOutputParser
 class summary(BaseModel):
@@ -89,7 +88,6 @@ def resume_summary(state: SummaryState, prompt: PromptTemplate):
     summary_score = answer_middle.summary
 
     return summary_score
-    
     
 # 팩트 체크 노드
 def fact_checking(state: SummaryState):

@@ -80,16 +80,21 @@ def relevance_check(state: ScoreState):
 
     print("==== [RELEVANCE CHECK] ====")
     print(response.score)
-
+    
     # 참고: 여기서의 관련성 평가기는 각자의 Prompt 를 사용하여 수정할 수 있습니다. 여러분들의 Groundedness Check 를 만들어 사용해 보세요!
     return {'yes_or_no':response.score}
+
+
+def no_relevance(state: ScoreState):
+    state['eval_document'] = ['0',f"지원자는 {state['eval_item']}에 관련 정보가 부족하여 최하 점수를 부여하였습니다."]
+    return state
 
 # PydanticOutputParser
 class score(BaseModel):    # 점수 산출 형식 지정    
     score_output: List[str] = Field(
         description="""
-        A Dict object containing evaluation scores for different resume categories. 
-        Each key represents a category, and the corresponding value is a score between 0 and 100.
+        A List containing evaluation scores for different resume categories.
+        The first element is a score between 0 and 100, and the second element is a description as a string.
         """    
     )
 
@@ -126,13 +131,13 @@ def score_resume(state: ScoreState, prompt: PromptTemplate):
 def fact_checking(state: ScoreState):
     # 1. 관련성 평가기를 생성
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="score-fact-check"
+        llm=ChatOpenAI(model="gpt-4o", temperature=0), target="score-fact-check"
     ).create()
 
-    print('='*30,state['eval_resume']['eval_resume'][1])
+    #print('='*30,state['eval_resume']['eval_resume'][1])
     # 2. 관련성 체크를 실행("yes" or "no")
     response = question_answer_relevant.invoke(
-        {"original_document": state['resume'], "eval_document": state['eval_resume']['eval_resume'][1]}
+        {"original_document1": state['resume'],"original_document2": state['eval_item_content'], "eval_document": state['eval_resume']['eval_resume'][1]}
     )
     
     print("==== [FACT CHECK] ====")
