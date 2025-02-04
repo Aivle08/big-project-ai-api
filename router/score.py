@@ -114,6 +114,17 @@ def summary_graph(item: ScoreDTO):
                 f'{item.eval_item}평가이유':outputs["eval_resume"]["eval_resume"][1]
             }
         }
+    except RecursionError:  # 재귀 한도 초과 시 예외 처리
+        print("[재귀 한도 초과] 한도 초과 하여 0점 부여")
+        return {
+            "status": "success",  
+            "code": 200,  
+            "message": "재귀 한도를 초과하여 관련성이 부족한 것으로 판단됨.",  
+            'item': {
+                f'{item.eval_item}': 0,  # 0점 부여
+                f'{item.eval_item}평가이유': f"지원자는 {item.eval_item}에 관련 정보가 부족하여 최하 점수를 부여하였습니다."
+            }
+        }
     except Exception as e:
             traceback.print_exc()
             return {
