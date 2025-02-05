@@ -17,7 +17,7 @@ from langgraph.checkpoint.memory import MemorySaver
 # State
 from state.question_state import QuestionState
 # Node
-from node.question_node import input, retrieve_document, relevance_check, combine_prompt, fact_checking, rewrite_question, experience_relevance_check
+from node.question_node import input, retrieve_document, relevance_check, combine_prompt, fact_checking, rewrite_question, experience_fact_check
 # etc
 from etc.etcc import question_is_relevant, question_is_fact
 from etc.graphs import visualize_graph
@@ -187,10 +187,18 @@ def experience_langgraph(item: Experience_WorkDTO):
             "retrieve_1_document",
             lambda state: {"resume": retrieve_document(state, "resume", 'applicant_id')},
         )
-        ## Relevance
         workflow.add_node(
             "relevance_check",
-            lambda state: {"relevance_1": experience_relevance_check(state, 'resume')},
+            lambda state: {"relevance_1": relevance_check(state, 'resume')},
+        )
+        workflow.add_node(
+            "rewrite_question",
+            lambda state: {"resume_query": rewrite_question(state, rewrite_prompt, 'resume')},
+        )
+        ## Relevance
+        workflow.add_node(
+            "fact_check",
+            lambda state: {"fact": experience_fact_check(state, 'resume')},
         )
         workflow.add_node(
             "combine_prompt",
@@ -198,16 +206,26 @@ def experience_langgraph(item: Experience_WorkDTO):
         )
 
         # 2. Edge 추가
-        workflow.add_edge('retrieve_1_document','combine_prompt')
-        workflow.add_edge('combine_prompt','relevance_check')
+        workflow.add_edge('retrieve_1_document','relevance_check')
+        workflow.add_edge('combine_prompt','fact_check')
+        workflow.add_edge('rewrite_question','retrieve_1_document')
         
         # 3. 조건부 엣지 추가
         workflow.add_conditional_edges(
             "relevance_check",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
             lambda state: question_is_relevant(state, 'relevance_1'),
             {
-                "relevant": END,  # 관련성이 있으면 답변을 생성합니다.
-                "not_relevant": "combine_prompt",  # 관련성이 없으면 다시 검색합니다.
+                "relevant": 'combine_prompt',  # 관련성이 있으면 답변을 생성합니다.
+                "not_relevant": "rewrite_question",  # 관련성이 없으면 다시 검색합니다.
+            },
+        )
+        
+        workflow.add_conditional_edges(
+            "fact_check",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
+            lambda state: question_is_fact(state),
+            {
+                "fact": END,  # 관련성이 있으면 답변을 생성합니다.
+                "not_fact": "combine_prompt",  # 관련성이 없으면 다시 검색합니다.
             },
         )
 
@@ -283,7 +301,7 @@ def work_langgraph(item: Experience_WorkDTO):
         )
         workflow.add_node(
             "relevance_check",
-            lambda state: {"relevance_1": experience_relevance_check(state, 'resume')},
+            lambda state: {"relevance_1": experience_fact_check(state, 'resume')},
         )
         workflow.add_node(
             "combine_prompt",

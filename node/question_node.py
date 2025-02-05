@@ -83,7 +83,7 @@ def relevance_check(state: QuestionState, key: str):
     return response.score
 
 # 경험 중심 자소서 관련성 체크 노드
-def experience_relevance_check(state: QuestionState, key: str):
+def experience_fact_check(state: QuestionState, key: str):
     # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
         llm=ChatOpenAI(model="gpt-4o", temperature=0), target="score-question-retrieval"
