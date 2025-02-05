@@ -334,7 +334,7 @@ class GroundednessChecker:
         elif self.target == "summary-fact-check":
             # 요약된 문서가 원본 문서와 비교했을 때 실제로 맞는지 확인하는 임무를 맡았습니다.
 
-            # 다음은 원본 문서입니다: {원본_문서}
+            # 다음은 원본 문서입니다: {original_document}
             # 요약된 문서는 다음과 같습니다: {summarized_document}
 
             # 당신의 임무는 두 문서를 비교하고 요약이 원본 문서의 사실을 정확하게 반영하는지 확인하는 것입니다.

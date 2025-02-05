@@ -69,10 +69,10 @@ def summary_graph(item: SummaryDTO):
         app = workflow.compile(checkpointer=memory)
 
         # 7. 그래프 시각화
-        visualize_graph(app,'tech_graph')
-            
+        visualize_graph(app,'summary_graph')
+    
         # 8. config 설정(재귀 최대 횟수, thread_id)
-        config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
+        config = RunnableConfig(recursion_limit=30, configurable={"thread_id": random_uuid()})
 
 
         # 9. 질문 입력
@@ -95,7 +95,15 @@ def summary_graph(item: SummaryDTO):
         return {
             "status": "success",  # 응답 상태
             "code": 200,  # HTTP 상태 코드
-            "message": "자소서 DB 추출 완료",  # 응답 메시지 
+            "message": "자소서 요약 완료",  # 응답 메시지 
+            "item" : outputs["summary_result"]
+        }
+    except RecursionError:  # 재귀 한도 초과 시 예외 처리
+        print("\033[31m[재귀 한도 초과]\033[0m")
+        return {
+            "status": "success",  # 응답 상태
+            "code": 200,  # HTTP 상태 코드
+            "message": "재귀 한도를 초과하여 판단 불가.",  # 응답 메시지 
             "item" : outputs["summary_result"]
         }
     except Exception as e:
@@ -139,7 +147,7 @@ def tech_prompt(item: ExtractionDTO):
         visualize_graph(app,'extraction_graph')
             
         # 8. config 설정(재귀 최대 횟수, thread_id)
-        config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
+        config = RunnableConfig(recursion_limit=30, configurable={"thread_id": random_uuid()})
 
         input_output_form = """
         {

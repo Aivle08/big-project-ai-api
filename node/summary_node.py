@@ -93,7 +93,7 @@ def resume_summary(state: SummaryState, prompt: PromptTemplate):
 def fact_checking(state: SummaryState):
     # 1. 관련성 평가기를 생성
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="summary-fact-check"
+        llm=ChatOpenAI(model="gpt-4o", temperature=0), target="summary-fact-check"
     ).create()
 
     # 2. 관련성 체크를 실행("yes" or "no")
@@ -143,7 +143,7 @@ def combine_prompt(state: extractionState, prompt: PromptTemplate):
     output_form = state['output_form']
 
     # 1. 모델 선언
-    model = ChatOpenAI(model='gpt-3.5-turbo', streaming=True, temperature=0)
+    model = ChatOpenAI(model='gpt-4o', streaming=True, temperature=0)
     
     # 구조화된 출력을 위한 LLM 설정
     # llm_with_tool = model.with_structured_output(question)
