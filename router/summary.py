@@ -72,7 +72,7 @@ def summary_graph(item: SummaryDTO):
         visualize_graph(app,'summary_graph')
     
         # 8. config 설정(재귀 최대 횟수, thread_id)
-        config = RunnableConfig(recursion_limit=30, configurable={"thread_id": random_uuid()})
+        config = RunnableConfig(recursion_limit=1, configurable={"thread_id": random_uuid()})
 
 
         # 9. 질문 입력
@@ -100,6 +100,7 @@ def summary_graph(item: SummaryDTO):
         }
     except RecursionError:  # 재귀 한도 초과 시 예외 처리
         print("\033[31m[재귀 한도 초과]\033[0m")
+        outputs = app.get_state(config).values 
         return {
             "status": "success",  # 응답 상태
             "code": 200,  # HTTP 상태 코드

@@ -68,7 +68,7 @@ def retrieve_document(state: QuestionState, collection_name: str, class_id: str)
 def relevance_check(state: QuestionState, key: str):
     # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="generate-question-retrieval"
+        llm=ChatOpenAI(model="gpt-4o", temperature=0), target="generate-question-retrieval"
     ).create()
 
     # 관련성 체크를 실행("yes" or "no")
@@ -82,11 +82,11 @@ def relevance_check(state: QuestionState, key: str):
     # 참고: 여기서의 관련성 평가기는 각자의 Prompt 를 사용하여 수정할 수 있습니다. 여러분들의 Groundedness Check 를 만들어 사용해 보세요!
     return response.score
 
-# 경험 중심 자소서 관련성 체크 노드
-def experience_relevance_check(state: QuestionState, key: str):
+# 경험 중심/ 경력 중심 자소서 관련성 체크 노드
+def experience_work_fact_checking(state: QuestionState, key: str):
     # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="score-question-retrieval"
+        llm=ChatOpenAI(model="gpt-4o", temperature=0), target="score-question-retrieval"
     ).create()
 
     # 관련성 체크를 실행("yes" or "no")
@@ -101,6 +101,7 @@ def experience_relevance_check(state: QuestionState, key: str):
     return response.score
 
 def rewrite_question(state: QuestionState, prompt: PromptTemplate, collection_name: str):
+    print('이전 query: ', state[f'{collection_name}_query'])
     # 1. 모델 선언
     model = ChatOpenAI(model='gpt-4o', streaming=True)
     
@@ -110,6 +111,8 @@ def rewrite_question(state: QuestionState, prompt: PromptTemplate, collection_na
     response = chain.invoke(
         {"question": state[f'{collection_name}_query']}
     )
+    
+    print('rewrite query: ', response)
     
     return response
 
@@ -145,11 +148,11 @@ def combine_prompt(state: QuestionState, prompt: PromptTemplate):
     
     return {'final_question':question_score}
 
-# 관련성 체크 노드
+# 관련성 체크 노드 (기술 중심)
 def fact_checking(state: QuestionState):
     # 1. 관련성 평가기를 생성
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="question-fact-check"
+        llm=ChatOpenAI(model='gpt-4o', temperature=0), target="question-fact-check"
     ).create()
 
     # 2. 관련성 체크를 실행("yes" or "no")

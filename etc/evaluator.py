@@ -225,21 +225,45 @@ class GroundednessChecker:
             input_vars = ["question", "answer"]
 
         elif self.target == "generate-question-retrieval":
-            # 당신은 검색된 문서가 주어진 질문과 관련이 있는지 평가하는 채점자입니다.
-            # 여기 질문이 있습니다:\n\n {질문} \n\n
-            # 다음은 검색된 문서입니다:\n\n {context1} \n
-            # 또한 검색된 문서에 질문에 대한 정확한 정보가 포함되어 있는지 평가해야 합니다,
-            # 또는 LLM이 문서에 없는 내용을 환각할 가능성이 있는 경우.
+            # 당신은 검색된 문서가 주어진 질문과 관련이 있는지 평가하는 임무를 맡은 채점자입니다.
 
-            # 검색된 문서가 질문과 관련이 있는지 여부를 나타내기 위해 이진 점수 '예' 또는 '아니오'를 제공합니다.
+            # ### 지침:
+            # 1. 검색된 문서에 질문에 답변하거나 맥락을 제공하는 데 도움이 될 수 있는 정보가 포함되어 있는지 평가합니다.
+            # 2. 문서에 질문에 직접적으로 관련되거나 간접적으로 도움이 되는 정보가 포함되어 있는 경우 '예'로 응답하세요.
+            # 3. 문서에 질문에 관련되거나 유용한 정보가 포함되지 않은 경우 '아니오'로 응답합니다.
+            # 4. 문서가 질문에 답할 수 있는 잠재적 가치를 제공하는지 여부에 초점을 맞추세요.
+            # 5. 사소한 세부 사항이나 부정확성이 질문에 대한 문서의 전반적인 관련성에 큰 영향을 미치지 않는 한 무시하세요.
+
+            # ### 질문:
+            # {질문}
+
+            # ### 검색된 문서:
+            # {context1}
+
+            # ### 작업:
+            # 이진 점수를 제공합니다:
+            # - 문서에 질문에 관련되거나 유용한 정보가 포함된 경우 '예'라고 합니다.
+            # - 문서에 관련되거나 유용한 정보가 포함되지 않은 경우 '아니오'입니다.
             template = """
-                You are a scorer who assesses whether a searched document is related to a given question.
-                Here is the question: \n\n {question} \n\n
-                Here is the retrieved document: \n\n {context1} \n
-                You should also assess whether the retrieved document contains accurate information about the question,
-                or if LLM is likely to hallucinate content that is not in the document.
-                    
-                Give a binary score 'yes' or 'no' score to indicate whether the retrieved document is relevant to the question.
+            You are a scorer tasked with evaluating whether a retrieved document is relevant to a given question.
+
+            ### Instructions:
+            1. Evaluate if the retrieved document contains information that could help answer or provide context to the question.
+            2. If the document includes directly relevant or indirectly helpful information for the question, respond with 'yes'.
+            3. If the document contains no relevant or useful information for the question, respond with 'no'.
+            4. Focus on whether the document provides any potential value for answering the question, rather than strict factual matching.
+            5. Ignore minor details or inaccuracies unless they significantly impact the document's overall relevance to the question.
+
+            ### Question:
+            {question}
+
+            ### Retrieved Document:
+            {context1}
+
+            ### Task:
+            Provide a binary score:
+            - 'yes' if the document contains relevant or helpful information for the question.
+            - 'no' if the document does not contain relevant or helpful information.
             """
             input_vars = ["question", "context1"]
             
