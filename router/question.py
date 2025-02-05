@@ -122,7 +122,7 @@ async def tech_langgraph(item: TechDTO):
         visualize_graph(app,'tech_graph')
         
         # 8. config 설정(재귀 최대 횟수, thread_id)
-        config = RunnableConfig(recursion_limit=30, configurable={"thread_id": random_uuid()})
+        config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
 
 
         # 9. 질문 입력
@@ -157,6 +157,16 @@ async def tech_langgraph(item: TechDTO):
             "code": 200,  # HTTP 상태 코드
             "message": "질문 생성 완료",  # 응답 메시지
             'item': outputs["final_question"]
+        }
+    except RecursionError:  # 재귀 한도 초과 시 예외 처리
+        print("\033[31m[재귀 한도 초과]\033[0m")
+        #print(outputs.items())
+        outputs = app.get_state(config).values 
+        return {
+            "status": "success",
+            "code": 200,
+            "message": "재귀 한도를 초과하여 판단 불가.",
+            'item': outputs['final_question']
         }
     except Exception as e:
             traceback.print_exc()
@@ -211,7 +221,7 @@ def experience_langgraph(item: Experience_WorkDTO):
         app = workflow.compile(checkpointer=memory)
 
         visualize_graph(app,'experience_graph')
-            
+
         # config 설정(재귀 최대 횟수, thread_id)
         config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
 
@@ -236,11 +246,20 @@ def experience_langgraph(item: Experience_WorkDTO):
         print(f'evaluation:\n{outputs["evaluation"]}')
         print(f'relevance_1:\n{outputs["relevance_1"]}')
         print(f'final_question:\n{outputs["final_question"]}')
-        
+
         return {
             "status": "success",  # 응답 상태
             "code": 200,  # HTTP 상태 코드
             "message": "질문 생성 완료",  # 응답 메시지
+            'item': outputs["final_question"]
+        }
+    except RecursionError:  # 재귀 한도 초과 시 예외 처리
+        print("\033[31m[재귀 한도 초과]\033[0m")
+        outputs = app.get_state(config).values 
+        return {
+            "status": "success",
+            "code": 200,
+            "message": "재귀 한도를 초과하여 판단 불가.",
             'item': outputs["final_question"]
         }
     except Exception as e:
@@ -324,6 +343,15 @@ def work_langgraph(item: Experience_WorkDTO):
             "status": "success",  # 응답 상태
             "code": 200,  # HTTP 상태 코드
             "message": "질문 생성 완료",  # 응답 메시지
+            'item': outputs["final_question"]
+        }
+    except RecursionError:  # 재귀 한도 초과 시 예외 처리
+        print("\033[31m[재귀 한도 초과]\033[0m")
+        outputs = app.get_state(config).values 
+        return {
+            "status": "success",
+            "code": 200,
+            "message": "재귀 한도를 초과하여 판단 불가.",
             'item': outputs["final_question"]
         }
     except Exception as e:

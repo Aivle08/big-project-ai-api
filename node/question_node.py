@@ -68,7 +68,7 @@ def retrieve_document(state: QuestionState, collection_name: str, class_id: str)
 def relevance_check(state: QuestionState, key: str):
     # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="generate-question-retrieval"
+        llm=ChatOpenAI(model="gpt-4o", temperature=0), target="generate-question-retrieval"
     ).create()
 
     # 관련성 체크를 실행("yes" or "no")
@@ -86,7 +86,7 @@ def relevance_check(state: QuestionState, key: str):
 def experience_relevance_check(state: QuestionState, key: str):
     # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="score-question-retrieval"
+        llm=ChatOpenAI(model="gpt-4o", temperature=0), target="score-question-retrieval"
     ).create()
 
     # 관련성 체크를 실행("yes" or "no")
@@ -101,6 +101,7 @@ def experience_relevance_check(state: QuestionState, key: str):
     return response.score
 
 def rewrite_question(state: QuestionState, prompt: PromptTemplate, collection_name: str):
+    print('이전 query: ', state[f'{collection_name}_query'])
     # 1. 모델 선언
     model = ChatOpenAI(model='gpt-4o', streaming=True)
     
@@ -110,6 +111,8 @@ def rewrite_question(state: QuestionState, prompt: PromptTemplate, collection_na
     response = chain.invoke(
         {"question": state[f'{collection_name}_query']}
     )
+    
+    print('rewrite query: ', response)
     
     return response
 
@@ -149,7 +152,7 @@ def combine_prompt(state: QuestionState, prompt: PromptTemplate):
 def fact_checking(state: QuestionState):
     # 1. 관련성 평가기를 생성
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="question-fact-check"
+        llm=ChatOpenAI(model='gpt-4o', temperature=0), target="question-fact-check"
     ).create()
 
     # 2. 관련성 체크를 실행("yes" or "no")

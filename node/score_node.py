@@ -70,7 +70,7 @@ def retrieve_document(state: ScoreState, collection_name: str, class_id: str):
 def relevance_check(state: ScoreState):
     # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0), target="score-question-retrieval"
+        llm=ChatOpenAI(model="gpt-4o", temperature=0), target="score-question-retrieval"
     ).create()
 
     # 관련성 체크를 실행("yes" or "no")
