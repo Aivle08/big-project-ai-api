@@ -14,6 +14,7 @@ from fastapi import FastAPI, HTTPException, Depends, status
 from router.summary import summary
 from router.question import question
 from router.score import score
+from router.zilliz import zilliz
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
@@ -46,6 +47,9 @@ app.include_router(score)
 
 # 요약 모델
 app.include_router(summary)
+
+# zilliz 모델
+app.include_router(zilliz)
 
 
 print(f'Documents: http://localhost:8000/docs')
