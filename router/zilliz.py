@@ -53,7 +53,7 @@ def disconnect_milvus():
 
 ##### 데이터 삽입 #####
 # resume에 지원서 pdf 로드하기
-def insert_data_resume(pdf_name_list, applicant_id_list):
+def insert_data_resume(item: ResumeInsertDTO):
     # 컬렉션 연결
     collection_name = "resume"
     collection = Collection(name=collection_name)
@@ -68,8 +68,8 @@ def insert_data_resume(pdf_name_list, applicant_id_list):
     bucket = os.getenv("S3_BUCKET")
 
     # S3에서 파일 가져오기 (다운로드 없이 메모리에서 읽기)
-    for pdf_name, applicant_id in zip(pdf_name_list, applicant_id_list) :
-        response = client_s3.get_object(Bucket=bucket, Key=pdf_name)
+    for pdf_info in item.pdf_info_list :
+        response = client_s3.get_object(Bucket=bucket, Key=pdf_info.pdf_name)
         pdf_bytes = response["Body"].read()  # PDF 파일을 바이트 형태로 읽음
         
         # 임시 파일 생성 후 저장
@@ -95,7 +95,7 @@ def insert_data_resume(pdf_name_list, applicant_id_list):
                 vector = embeddings.embed_query(chunk)
                 
                 data = {
-                    'applicant_id' : applicant_id,
+                    'applicant_id' : pdf_info.applicant_id,
                     'vector':vector,
                     'text' : chunk,
                 }
@@ -165,7 +165,7 @@ async def insert_resume(item: ResumeInsertDTO):
     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
     try:
         milvus_connect()
-        insert_data_resume(item.pdf_name_list, item.applicant_id_list)
+        insert_data_resume(item)
         disconnect_milvus()
         
         return {

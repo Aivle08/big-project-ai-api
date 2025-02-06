@@ -1,8 +1,12 @@
 from pydantic import Field, BaseModel
+from typing import List
+
+class PDFInfo(BaseModel):
+    pdf_name: str
+    applicant_id: int
 
 class ResumeInsertDTO(BaseModel):
-    pdf_name_list: list = Field(['1_5.pdf'], description='PDF 파일 이름')
-    applicant_id_list: list = Field([1000], description='지원자 id')
+    pdf_info_list: List[PDFInfo] = Field([PDFInfo(pdf_name='1_5.pdf', applicant_id=1000)], description='PDF 정보 리스트')
 
 class EvalInsertDTO(BaseModel):
     recruitment_id: int = Field(1, description='공고 id')
