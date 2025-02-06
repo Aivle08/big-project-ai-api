@@ -122,7 +122,7 @@ async def tech_langgraph(item: TechDTO):
         visualize_graph(app,'tech_graph')
         
         # 8. config 설정(재귀 최대 횟수, thread_id)
-        config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
+        config = RunnableConfig(recursion_limit=15, configurable={"thread_id": random_uuid()})
 
 
         # 9. 질문 입력
@@ -166,7 +166,7 @@ async def tech_langgraph(item: TechDTO):
             "status": "success",
             "code": 200,
             "message": "재귀 한도를 초과하여 판단 불가.",
-            'item': outputs['final_question']
+            'item': '재귀 한도를 초과하여 판단 불가.'
         }
     except Exception as e:
             traceback.print_exc()
@@ -241,7 +241,7 @@ def experience_langgraph(item: Experience_WorkDTO):
         visualize_graph(app,'experience_graph')
 
         # config 설정(재귀 최대 횟수, thread_id)
-        config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
+        config = RunnableConfig(recursion_limit=15, configurable={"thread_id": random_uuid()})
 
         # 질문 입력
         inputs = QuestionState(job=item.job, 
@@ -278,7 +278,11 @@ def experience_langgraph(item: Experience_WorkDTO):
             "status": "success",
             "code": 200,
             "message": "재귀 한도를 초과하여 판단 불가.",
+<<<<<<< HEAD
             'item': " "#outputs["final_question"]
+=======
+            'item': '재귀 한도를 초과하여 판단 불가.'
+>>>>>>> cfc656baad45b724187a3bcfa919baf028e70db3
         }
     except Exception as e:
             traceback.print_exc()
@@ -355,7 +359,7 @@ def work_langgraph(item: Experience_WorkDTO):
         visualize_graph(app,'work_graph')
             
         # config 설정(재귀 최대 횟수, thread_id)
-        config = RunnableConfig(recursion_limit=10, configurable={"thread_id": random_uuid()})
+        config = RunnableConfig(recursion_limit=15, configurable={"thread_id": random_uuid()})
 
         # 질문 입력
         inputs = QuestionState(job=item.job, 
@@ -391,7 +395,7 @@ def work_langgraph(item: Experience_WorkDTO):
             "status": "success",
             "code": 200,
             "message": "재귀 한도를 초과하여 판단 불가.",
-            'item': outputs["final_question"]
+            'item': '재귀 한도를 초과하여 판단 불가.'
         }
     except Exception as e:
             traceback.print_exc()

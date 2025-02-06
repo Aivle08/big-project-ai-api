@@ -72,7 +72,7 @@ def summary_graph(item: SummaryDTO):
         visualize_graph(app,'summary_graph')
     
         # 8. config 설정(재귀 최대 횟수, thread_id)
-        config = RunnableConfig(recursion_limit=1, configurable={"thread_id": random_uuid()})
+        config = RunnableConfig(recursion_limit=15, configurable={"thread_id": random_uuid()})
 
 
         # 9. 질문 입력
@@ -105,7 +105,7 @@ def summary_graph(item: SummaryDTO):
             "status": "success",  # 응답 상태
             "code": 200,  # HTTP 상태 코드
             "message": "재귀 한도를 초과하여 판단 불가.",  # 응답 메시지 
-            "item" : outputs["summary_result"]
+            "item" : '재귀 한도를 초과하여 판단 불가.'
         }
     except Exception as e:
             traceback.print_exc()
@@ -148,7 +148,7 @@ def tech_prompt(item: ExtractionDTO):
         visualize_graph(app,'extraction_graph')
             
         # 8. config 설정(재귀 최대 횟수, thread_id)
-        config = RunnableConfig(recursion_limit=30, configurable={"thread_id": random_uuid()})
+        config = RunnableConfig(recursion_limit=20, configurable={"thread_id": random_uuid()})
 
         input_output_form = """
         {
