@@ -73,7 +73,7 @@ def resume_summary(state: SummaryState, prompt: PromptTemplate):
     resume = state['resume']
     
     # 1. 모델 선언
-    model = ChatOpenAI(model='gpt-4o', streaming=True)
+    model = ChatOpenAI(model='gpt-3.5-turbo', streaming=True)
     
     # 2. 구조화된 출력을 위한 LLM 설정
     llm_with_tool = model.with_structured_output(summary)

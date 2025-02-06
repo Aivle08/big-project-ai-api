@@ -55,11 +55,12 @@ extraction_prompt = PromptTemplate(
     1. Organize the content according to the format below. Leave fields blank if the information is not provided.
     2. Avoid repetition by outputting duplicate information only once.
     3. Do not omit important details (e.g., major, GPA, etc.).
+    4. Do not include any unnecessary symbols like """ """ or JSON formatting in the output.
     
     Please write the basis in Korean.
-    ### Output Format:
     Return your response strictly in this JSON format:
-        {output_form}
+    ### Output Format:
+    {output_form}
         
     ### Resume:
     {resume}

@@ -3,6 +3,8 @@
 import os
 import pandas as pd
 import traceback
+import json
+
 # Fastapi
 from fastapi import APIRouter, HTTPException, status, File, UploadFile
 
@@ -152,16 +154,16 @@ def tech_prompt(item: ExtractionDTO):
 
         input_output_form = """
         {
-            "name": ,
-            "phone": ,
-            "email": ,
-            "birth": ,
-            "address": ,
-            "else_summary":
-            출신학교(University or School) 및 전공(Major) 정보를 포함하고, 경력 항목에서 이전 직무 경험을 자연스럽게 연결하여 기술해야 합니다. 
-            또한, 자격증 및 어학 능력, 대외활동 및 기타 정보를 서술식으로 작성하되, 문장 간 개행 없이 하나의 단락으로 연결하여 표현해야 합니다. 
-            마지막으로, 주요 내용에서는 핵심 역량과 차별점을 요약하여 지원하는 직무와의 적합성을 효과적으로 설명해야 합니다. 
-            출력 시 줄바꿈('\n') 없이 한 문단으로 서술하고, 간결하면서도 논리적으로 연결된 문장으로 작성해야 합니다.
+        "name": ,
+        "phone": ,
+        "email": ,
+        "birth": ,
+        "address": ,
+        "else_summary":
+        출신학교(University or School) 및 전공(Major) 정보를 포함하고, 경력 항목에서 이전 직무 경험을 자연스럽게 연결하여 기술해야 합니다. 
+        또한, 자격증 및 어학 능력, 대외활동 및 기타 정보를 서술식으로 작성하되, 문장 간 개행 없이 하나의 단락으로 연결하여 표현해야 합니다. 
+        마지막으로, 주요 내용에서는 핵심 역량과 차별점을 요약하여 지원하는 직무와의 적합성을 효과적으로 설명해야 합니다. 
+        출력 시 줄바꿈('\n') 없이 한 문단으로 서술하고, 간결하면서도 논리적으로 연결된 문장으로 작성해야 합니다.
         }
         """
 
@@ -180,11 +182,14 @@ def tech_prompt(item: ExtractionDTO):
         print("===" * 20)
         print(f'final_result:\n{outputs["final_result"]}')
         
+        json_result = json.loads(outputs["final_result"])
+        
         return {
             "status": "success",  # 응답 상태
             "code": 200,  # HTTP 상태 코드
             "message": "자소서 DB 추출 완료",  # 응답 메시지 
-            "item": outputs["final_result"]
+            "item": json_result
+
         }
     except Exception as e:
             traceback.print_exc()
