@@ -53,7 +53,7 @@ def disconnect_milvus():
 
 ##### 데이터 삽입 #####
 # resume에 지원서 pdf 로드하기
-def insert_data_resume(pdf_name, applicant_id):
+def insert_data_resume(pdf_name_list, applicant_id_list):
     # 컬렉션 연결
     collection_name = "resume"
     collection = Collection(name=collection_name)
@@ -68,43 +68,44 @@ def insert_data_resume(pdf_name, applicant_id):
     bucket = os.getenv("S3_BUCKET")
 
     # S3에서 파일 가져오기 (다운로드 없이 메모리에서 읽기)
-    response = client_s3.get_object(Bucket=bucket, Key=pdf_name)
-    pdf_bytes = response["Body"].read()  # PDF 파일을 바이트 형태로 읽음
-    
-    # 🔹 임시 파일 생성 후 저장
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
-        temp_pdf.write(pdf_bytes)
-        temp_pdf_path = temp_pdf.name  # 임시 파일 경로 저장
-    
-    print(f"✅ PDF 임시 파일 저장 완료: {temp_pdf_path}")
-    
-    # 메모리에서 PDF 로드 (파일 저장 없이 사용)
-    pdf_loader = PyMuPDFLoader(temp_pdf_path)
-    
-    docs = pdf_loader.load()
-    
-    for doc in docs :
-        # 텍스트를 청크화
-        text = doc.page_content
-        print(text)
-        text_splitter = MarkdownTextSplitter(chunk_size=250, chunk_overlap=20)
-        chunks = text_splitter.split_text(text)
+    for pdf_name, applicant_id in zip(pdf_name_list, applicant_id_list) :
+        response = client_s3.get_object(Bucket=bucket, Key=pdf_name)
+        pdf_bytes = response["Body"].read()  # PDF 파일을 바이트 형태로 읽음
         
-        for chunk in chunks:
-            vector = embeddings.embed_query(chunk)
+        # 임시 파일 생성 후 저장
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
+            temp_pdf.write(pdf_bytes)
+            temp_pdf_path = temp_pdf.name  # 임시 파일 경로 저장
+        
+        print(f"✅ PDF 임시 파일 저장 완료: {temp_pdf_path}")
+        
+        # 메모리에서 PDF 로드 (파일 저장 없이 사용)
+        pdf_loader = PyMuPDFLoader(temp_pdf_path)
+        
+        docs = pdf_loader.load()
+        
+        for doc in docs :
+            # 텍스트를 청크화
+            text = doc.page_content
+            print(text)
+            text_splitter = MarkdownTextSplitter(chunk_size=250, chunk_overlap=20)
+            chunks = text_splitter.split_text(text)
             
-            data = {
-                'applicant_id' : applicant_id,
-                'vector':vector,
-                'text' : chunk,
-            }
-            
-            collection.insert(collection = collection_name, data = data,) 
-            
-    # 🔹 임시 파일 삭제
-    if os.path.exists(temp_pdf_path):
-        os.remove(temp_pdf_path)
-        print(f"🗑️ 임시 파일 삭제 완료: {temp_pdf_path}")
+            for chunk in chunks:
+                vector = embeddings.embed_query(chunk)
+                
+                data = {
+                    'applicant_id' : applicant_id,
+                    'vector':vector,
+                    'text' : chunk,
+                }
+                
+                collection.insert(collection = collection_name, data = data,) 
+                
+        # 임시 파일 삭제
+        if os.path.exists(temp_pdf_path):
+            os.remove(temp_pdf_path)
+            print(f"🗑️ 임시 파일 삭제 완료: {temp_pdf_path}")
 
 # evaluation에 평가 기준 로드하기
 def insert_data_evaluation(recruitment_id, detail_list):
@@ -138,12 +139,12 @@ def insert_data_evaluation(recruitment_id, detail_list):
 
 ##### 데이터 삭제 #####
 # resume에 지원자자 데이터 삭제 
-def delete_data_resume(applicant_id):
+def delete_data_resume(applicant_id_list):
     # 컬렉션 연결
     collection_name = "resume"
     collection = Collection(name=collection_name)
     
-    collection.delete(f"applicant_id in [{applicant_id}]")
+    collection.delete(f"applicant_id in {applicant_id_list}")
 
 # evaluation에 공고 기준 삭제 
 def delete_data_evaluation(recruitment_id):
@@ -164,7 +165,7 @@ async def insert_resume(item: ResumeInsertDTO):
     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
     try:
         milvus_connect()
-        insert_data_resume(item.pdf_name, item.applicant_id)
+        insert_data_resume(item.pdf_name_list, item.applicant_id_list)
         disconnect_milvus()
         
         return {
@@ -209,7 +210,7 @@ async def delete_Resume(item: ResumeDeleteDTO):
     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
     try:
         milvus_connect()
-        delete_data_resume(item.applicant_id)
+        delete_data_resume(item.applicant_id_list)
         disconnect_milvus()
         
         return {

@@ -19,3 +19,4 @@ typing
 bs4
 IPython
 openai
+boto3
