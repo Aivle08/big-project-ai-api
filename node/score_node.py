@@ -58,9 +58,14 @@ def retrieve_document(state: ScoreState, collection_name: str, class_id: str):
     )
     
     retrieved_docs = retriever.invoke(latest_question)
+    #print('chunks: ', retrieved_docs)
+    # 검색한 chunk 저장
+    for chunk in retrieved_docs:
+        state['resume_chunk'].append(chunk.page_content)
+    
     retrieved_docs = format_docs(retrieved_docs)
     
-    print(retrieved_docs)
+    #print(retrieved_docs)
     
     # 검색된 문서를 context 키에 저장합니다.
     return {f'{collection_name}':retrieved_docs}
@@ -143,4 +148,4 @@ def fact_checking(state: ScoreState):
     print("==== [FACT CHECK] ====")
     print(response.score)
 
-    return {'yes_or_no':response.score}
+    return {'yes_or_no':response.score} 

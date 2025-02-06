@@ -58,6 +58,9 @@ def retrieve_document(state: QuestionState, collection_name: str, class_id: str)
     
     # 문서에서 검색하여 관련성 있는 문서를 찾습니다.
     retrieved_docs = retriever.invoke(latest_question)
+    # 검색한 chunk 저장
+    for chunk in retrieved_docs:
+        state['resume_chunk'].append(chunk.page_content)
     # 검색된 문서를 형식화합니다.(프롬프트 입력으로 넣어주기 위함)
     retrieved_docs = format_docs(retrieved_docs)
     

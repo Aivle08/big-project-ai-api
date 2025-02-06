@@ -89,7 +89,8 @@ def summary_graph(item: ScoreDTO):
                             applicant_id = item.applicant_id,
                             eval_item = item.eval_item,
                             eval_item_content = item.eval_item_content,
-                            query_main=f"저는 {item.job} 직무를 수행할 지원자의 {item.eval_item}에 대해 분석하고 싶습니다. 이 기준에 맞는 지원자의 자소서 내용을 뽑아주세요.")
+                            query_main=f"저는 {item.job} 직무를 수행할 지원자의 {item.eval_item}에 대해 분석하고 싶습니다. 이 기준에 맞는 지원자의 자소서 내용을 뽑아주세요.",
+                            resume_chunk=[])
 
         # 10. 그래프 실행 출력
         invoke_graph(app, inputs, config)
@@ -104,6 +105,7 @@ def summary_graph(item: ScoreDTO):
         print(f'eval_item:\n{outputs["eval_item"]}')
         print(f'eval_item_content:\n{outputs["eval_item_content"]}')
         print(f'eval_resume:\n{outputs["eval_resume"]}')
+        print(f'resume_chunk:\n{outputs["resume_chunk"]}')
         
         return {
             "status": "success",  # 응답 상태
@@ -111,7 +113,8 @@ def summary_graph(item: ScoreDTO):
             "message": "질문 측정 완료",  # 응답 메시지
             'item':{
                 f'{item.eval_item}':int(outputs["eval_resume"]["eval_resume"][0]),
-                f'{item.eval_item}평가이유':outputs["eval_resume"]["eval_resume"][1]
+                f'{item.eval_item}평가이유':outputs["eval_resume"]["eval_resume"][1],
+                '검색_청크':outputs['resume_chunk']
             }
         }
     except RecursionError:  # 재귀 한도 초과 시 예외 처리

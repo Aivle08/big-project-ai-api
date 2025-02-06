@@ -108,7 +108,6 @@ async def tech_langgraph(item: TechDTO):
             },
         )
         
-
         # 4. 그래프 진입점 설정
         workflow.set_entry_point("input")
 
@@ -124,7 +123,6 @@ async def tech_langgraph(item: TechDTO):
         # 8. config 설정(재귀 최대 횟수, thread_id)
         config = RunnableConfig(recursion_limit=15, configurable={"thread_id": random_uuid()})
 
-
         # 9. 질문 입력
         inputs = QuestionState(job=item.job, 
                                 company_id = item.company_id,
@@ -132,6 +130,7 @@ async def tech_langgraph(item: TechDTO):
                                 fact='yes',
                                 resume_query=f'{item.job}의 기술 중심으로 생성해줘',
                                 evaluation_query=f'{item.job}의 기술 중심으로 생성해줘',
+                                resume_chunk=[],
                                 )
 
 
@@ -156,7 +155,10 @@ async def tech_langgraph(item: TechDTO):
             "status": "success",  # 응답 상태
             "code": 200,  # HTTP 상태 코드
             "message": "질문 생성 완료",  # 응답 메시지
-            'item': outputs["final_question"]
+            'item': {
+                '질문': outputs["final_question"],
+                '검색_청크':outputs['resume_chunk'],
+            }
         }
     except RecursionError:  # 재귀 한도 초과 시 예외 처리
         print("\033[31m[재귀 한도 초과]\033[0m")
@@ -248,7 +250,8 @@ def experience_langgraph(item: Experience_WorkDTO):
                             company_id = item.company_id,
                             applicant_id = item.applicant_id,
                             evaluation = item.evaluation,
-                            resume_query=f'{item.job}의 기술 중심으로 생성해줘' )
+                            resume_query=f'{item.job}의 기술 중심으로 생성해줘',
+                            resume_chunk=[])
 
 
         # 그래프 실행
@@ -269,7 +272,10 @@ def experience_langgraph(item: Experience_WorkDTO):
             "status": "success",  # 응답 상태
             "code": 200,  # HTTP 상태 코드
             "message": "질문 생성 완료",  # 응답 메시지
-            'item': outputs["final_question"]
+            'item': {
+                '질문': outputs["final_question"],
+                '검색_청크':outputs['resume_chunk'],
+            }
         }
     except RecursionError:  # 재귀 한도 초과 시 예외 처리
         print("\033[31m[재귀 한도 초과]\033[0m")
@@ -362,7 +368,8 @@ def work_langgraph(item: Experience_WorkDTO):
                             company_id = item.company_id,
                             applicant_id = item.applicant_id,
                             evaluation = item.evaluation,
-                            resume_query=f'경력 사항, 인턴 및 대외활동')
+                            resume_query=f'경력 사항, 인턴 및 대외활동',
+                            resume_chunk=[],)
 
         # 그래프 실행
         invoke_graph(app, inputs, config)
@@ -382,7 +389,10 @@ def work_langgraph(item: Experience_WorkDTO):
             "status": "success",  # 응답 상태
             "code": 200,  # HTTP 상태 코드
             "message": "질문 생성 완료",  # 응답 메시지
-            'item': outputs["final_question"]
+            'item': {
+                '질문': outputs["final_question"],
+                '검색_청크':outputs['resume_chunk'],
+            }
         }
     except RecursionError:  # 재귀 한도 초과 시 예외 처리
         print("\033[31m[재귀 한도 초과]\033[0m")
