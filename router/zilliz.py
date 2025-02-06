@@ -6,6 +6,8 @@ import traceback
 import pandas as pd
 import numpy as np
 from dotenv import load_dotenv
+import io
+import tempfile
 
 # Fastapi
 from fastapi import APIRouter, HTTPException, status, File, UploadFile
@@ -17,8 +19,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter,MarkdownTextS
 from langchain_milvus import Milvus, Zilliz
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-# zilliz CLUSTER_ENDPOINT, TOKEN
-# from main import cluster_endpoint, token
+# AWS
+import logging
+import boto3
+from botocore.exceptions import ClientError
 
 # TechDTO
 from dto.zilliz_dto import ResumeInsertDTO, EvalInsertDTO, ResumeDeleteDTO, EvalDeleteDTO
@@ -40,6 +44,7 @@ client = MilvusClient(
 # LangChain용 OpenAI Embeddings 설정
 embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
 
+############################# zilliz Module #############################
 def milvus_connect():
     connections.connect(uri=cluster_endpoint, token=token)
 
@@ -50,17 +55,38 @@ def disconnect_milvus():
 # resume에 지원서 pdf 로드하기
 def insert_data_resume(pdf_name, applicant_id):
     # 컬렉션 연결
-    
     collection_name = "resume"
     collection = Collection(name=collection_name)
-
-    loader = PyMuPDFLoader(pdf_name)
     
-    docs = loader.load()
+    client_s3 = boto3.client(
+        's3',
+        aws_access_key_id=os.getenv("CREDENTIALS_ACCESS_KEY"),
+        aws_secret_access_key=os.getenv("CREDENTIALS_SECRET_KEY"),
+        region_name = os.getenv("AWS_REGION")
+    )
+    
+    bucket = os.getenv("S3_BUCKET")
+
+    # S3에서 파일 가져오기 (다운로드 없이 메모리에서 읽기)
+    response = client_s3.get_object(Bucket=bucket, Key=pdf_name)
+    pdf_bytes = response["Body"].read()  # PDF 파일을 바이트 형태로 읽음
+    
+    # 🔹 임시 파일 생성 후 저장
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
+        temp_pdf.write(pdf_bytes)
+        temp_pdf_path = temp_pdf.name  # 임시 파일 경로 저장
+    
+    print(f"✅ PDF 임시 파일 저장 완료: {temp_pdf_path}")
+    
+    # 메모리에서 PDF 로드 (파일 저장 없이 사용)
+    pdf_loader = PyMuPDFLoader(temp_pdf_path)
+    
+    docs = pdf_loader.load()
     
     for doc in docs :
         # 텍스트를 청크화
         text = doc.page_content
+        print(text)
         text_splitter = MarkdownTextSplitter(chunk_size=250, chunk_overlap=20)
         chunks = text_splitter.split_text(text)
         
@@ -74,6 +100,11 @@ def insert_data_resume(pdf_name, applicant_id):
             }
             
             collection.insert(collection = collection_name, data = data,) 
+            
+    # 🔹 임시 파일 삭제
+    if os.path.exists(temp_pdf_path):
+        os.remove(temp_pdf_path)
+        print(f"🗑️ 임시 파일 삭제 완료: {temp_pdf_path}")
 
 # evaluation에 평가 기준 로드하기
 def insert_data_evaluation(recruitment_id, detail_list):
@@ -121,28 +152,33 @@ def delete_data_evaluation(recruitment_id):
     collection = Collection(name=collection_name)
     
     collection.delete(f"company_id in [{recruitment_id}]")
+
+############################# s3 Module #############################
+
     
+
+############################# FASTAPI #############################
 # zillz에 이력서 데이터 추가
-# @zilliz.post("/insertResume", status_code = status.HTTP_200_OK, tags=['zilliz'])
-# async def insert_resume(item: ResumeInsertDTO):
-#     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
-#     try:
-#         milvus_connect()
-#         insert_data_resume(item.pdf_name, item.applicant_id)
-#         disconnect_milvus()
+@zilliz.post("/insertResume", status_code = status.HTTP_200_OK, tags=['zilliz'])
+async def insert_resume(item: ResumeInsertDTO):
+    print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
+    try:
+        milvus_connect()
+        insert_data_resume(item.pdf_name, item.applicant_id)
+        disconnect_milvus()
         
-#         return {
-#             "status": "success",  # 응답 상태
-#             "code": 200,  # HTTP 상태 코드
-#             "message": "이력서 데이터 추가 완료",  # 응답 메시지
-#         }
+        return {
+            "status": "success",  # 응답 상태
+            "code": 200,  # HTTP 상태 코드
+            "message": "이력서 데이터 추가 완료",  # 응답 메시지
+        }
         
-#     except Exception as e:
-#             traceback.print_exc()
-#             return {
-#                 "status": "error",
-#                 "message": f"에러 발생: {str(e)}"
-#             }
+    except Exception as e:
+            traceback.print_exc()
+            return {
+                "status": "error",
+                "message": f"에러 발생: {str(e)}"
+            }
 
 # zillz에 평가 항목 상세 내용 추가
 @zilliz.post("/insertDetail", status_code = status.HTTP_200_OK, tags=['zilliz'])
@@ -168,26 +204,26 @@ async def insert_detail(item: EvalInsertDTO):
             
 # zillz에서 이력서 데이터 삭제
 # 이거 리스트 형태로 수정 필요할 듯 공고를 삭제하면서 이력서 내용을 삭제하는 것것
-# @zilliz.post("/deleteResume", status_code = status.HTTP_200_OK, tags=['zilliz'])
-# async def delete_Resume(item: ResumeDeleteDTO):
-#     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
-#     try:
-#         milvus_connect()
-#         delete_data_resume(item.applicant_id)
-#         disconnect_milvus()
+@zilliz.post("/deleteResume", status_code = status.HTTP_200_OK, tags=['zilliz'])
+async def delete_Resume(item: ResumeDeleteDTO):
+    print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
+    try:
+        milvus_connect()
+        delete_data_resume(item.applicant_id)
+        disconnect_milvus()
         
-#         return {
-#             "status": "success",  # 응답 상태
-#             "code": 200,  # HTTP 상태 코드
-#             "message": "이력서 데이터 삭제 완료",  # 응답 메시지
-#         }
+        return {
+            "status": "success",  # 응답 상태
+            "code": 200,  # HTTP 상태 코드
+            "message": "이력서 데이터 삭제 완료",  # 응답 메시지
+        }
         
-#     except Exception as e:
-#             traceback.print_exc()
-#             return {
-#                 "status": "error",
-#                 "message": f"에러 발생: {str(e)}"
-#             }
+    except Exception as e:
+            traceback.print_exc()
+            return {
+                "status": "error",
+                "message": f"에러 발생: {str(e)}"
+            }
 
 # zillz에서 공고 데이터 삭제
 @zilliz.post("/deleteDetial", status_code = status.HTTP_200_OK, tags=['zilliz'])

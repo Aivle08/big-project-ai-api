@@ -278,7 +278,7 @@ def experience_langgraph(item: Experience_WorkDTO):
             "status": "success",
             "code": 200,
             "message": "재귀 한도를 초과하여 판단 불가.",
-            'item': outputs["final_question"]
+            'item': " "#outputs["final_question"]
         }
     except Exception as e:
             traceback.print_exc()
