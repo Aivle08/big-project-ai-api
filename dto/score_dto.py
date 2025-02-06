@@ -79,4 +79,4 @@ o 영업 관련 자격증(CRM, 마케팅 관련 자격증) 보유자 우대
 • 대외활동 경험: IT 관련 경진대회, 공모전, 세미나 참여 등 ICT 관련
 산업에 대한 이해를 증명할 수 있는 경험.""",
         description='평가 기준 내용')
-    applicant_id: int = Field(1, description='지원자 id')
+    applicant_id: int = Field(101, description='지원자 id')

@@ -3,12 +3,12 @@ from pydantic import Field, BaseModel
 class TechDTO(BaseModel):
     job: str = Field('IT영업', description='직무')
     company_id: int = Field(1, description='회사 id')
-    applicant_id: int = Field(2, description='지원자 id')
+    applicant_id: int = Field(101, description='지원자 id')
 
 class Experience_WorkDTO(BaseModel):
     job: str = Field('IT영업', description='직무')
     company_id: int = Field(1, description='회사 id')
-    applicant_id: int = Field(2, description='지원자 id')
+    applicant_id: int = Field(101, description='지원자 id')
     evaluation: str = Field("""
     5. 공고
     수행업무

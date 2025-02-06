@@ -121,8 +121,7 @@ def summary_graph(item: ScoreDTO):
             "code": 200,  
             "message": "재귀 한도를 초과하여 판단 불가.",  
             'item': {
-                f'{item.eval_item}': int(outputs["eval_resume"]["eval_resume"][0]),  # 0점 부여
-                f'{item.eval_item}평가이유': outputs["eval_resume"]["eval_resume"][1]
+                '재귀 한도를 초과하여 판단 불가.'
             }
         }
     except Exception as e:
