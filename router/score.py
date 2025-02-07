@@ -112,8 +112,8 @@ def summary_graph(item: ScoreDTO):
             "code": 200,  # HTTP 상태 코드
             "message": "질문 측정 완료",  # 응답 메시지
             'item':{
-                f'{item.eval_item}':int(outputs["eval_resume"]["eval_resume"][0]),
-                f'{item.eval_item}평가이유':outputs["eval_resume"]["eval_resume"][1],
+                f'질문':int(outputs["eval_resume"]["eval_resume"][0]),
+                f'평가이유':outputs["eval_resume"]["eval_resume"][1],
                 '검색_청크':outputs['resume_chunk']
             }
         }
