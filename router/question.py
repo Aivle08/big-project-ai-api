@@ -156,8 +156,8 @@ async def tech_langgraph(item: TechDTO):
             "code": 200,  # HTTP 상태 코드
             "message": "질문 생성 완료",  # 응답 메시지
             'item': {
-                '질문': outputs["final_question"],
-                '검색_청크':outputs['resume_chunk'],
+                'question': outputs["final_question"],
+                'chunk':outputs['resume_chunk'],
             }
         }
     except RecursionError:  # 재귀 한도 초과 시 예외 처리
@@ -273,8 +273,8 @@ def experience_langgraph(item: Experience_WorkDTO):
             "code": 200,  # HTTP 상태 코드
             "message": "질문 생성 완료",  # 응답 메시지
             'item': {
-                '질문': outputs["final_question"],
-                '검색_청크':outputs['resume_chunk'],
+                'question': outputs["final_question"],
+                'chunk':outputs['resume_chunk'],
             }
         }
     except RecursionError:  # 재귀 한도 초과 시 예외 처리
@@ -390,8 +390,8 @@ def work_langgraph(item: Experience_WorkDTO):
             "code": 200,  # HTTP 상태 코드
             "message": "질문 생성 완료",  # 응답 메시지
             'item': {
-                '질문': outputs["final_question"],
-                '검색_청크':outputs['resume_chunk'],
+                'question': outputs["final_question"],
+                'chunk':outputs['resume_chunk'],
             }
         }
     except RecursionError:  # 재귀 한도 초과 시 예외 처리

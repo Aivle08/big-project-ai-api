@@ -112,9 +112,9 @@ def summary_graph(item: ScoreDTO):
             "code": 200,  # HTTP 상태 코드
             "message": "질문 측정 완료",  # 응답 메시지
             'item':{
-                f'질문':int(outputs["eval_resume"]["eval_resume"][0]),
-                f'평가이유':outputs["eval_resume"]["eval_resume"][1],
-                '검색_청크':outputs['resume_chunk']
+                f'question':int(outputs["eval_resume"]["eval_resume"][0]),
+                f'reason':outputs["eval_resume"]["eval_resume"][1],
+                'chunk':outputs['resume_chunk']
             }
         }
     except RecursionError:  # 재귀 한도 초과 시 예외 처리
