@@ -121,10 +121,12 @@ def summary_graph(item: ScoreDTO):
         print("\033[31m[재귀 한도 초과]\033[0m")
         return {
             "status": "success",  
-            "code": 200,  
+            "code": 204,  
             "message": "재귀 한도를 초과하여 판단 불가.",  
             'item': {
-                '재귀 한도를 초과하여 판단 불가.'
+                f'score':None,
+                f'reason':None,
+                'chunk':None,
             }
         }
     except Exception as e:

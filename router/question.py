@@ -166,9 +166,12 @@ async def tech_langgraph(item: TechDTO):
         outputs = app.get_state(config).values 
         return {
             "status": "success",
-            "code": 200,
+            "code": 204,
             "message": "재귀 한도를 초과하여 판단 불가.",
-            'item': '재귀 한도를 초과하여 판단 불가.'
+            'item': {
+                'question': None,
+                'chunk': None,
+            }
         }
     except Exception as e:
             traceback.print_exc()
@@ -282,9 +285,12 @@ def experience_langgraph(item: Experience_WorkDTO):
         outputs = app.get_state(config).values 
         return {
             "status": "success",
-            "code": 200,
+            "code": 204,
             "message": "재귀 한도를 초과하여 판단 불가.",
-            'item': '재귀 한도를 초과하여 판단 불가.'
+            'item': {
+                'question':None,
+                'chunk':None,
+            }
         }
     except Exception as e:
             traceback.print_exc()
@@ -399,9 +405,12 @@ def work_langgraph(item: Experience_WorkDTO):
         outputs = app.get_state(config).values 
         return {
             "status": "success",
-            "code": 200,
+            "code": 204,
             "message": "재귀 한도를 초과하여 판단 불가.",
-            'item': '재귀 한도를 초과하여 판단 불가.'
+            'item': {
+                'question': None,
+                'chunk': None,
+            }
         }
     except Exception as e:
             traceback.print_exc()

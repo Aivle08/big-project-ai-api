@@ -105,9 +105,9 @@ def summary_graph(item: SummaryDTO):
         outputs = app.get_state(config).values 
         return {
             "status": "success",  # 응답 상태
-            "code": 200,  # HTTP 상태 코드
+            "code": 204,  # HTTP 상태 코드
             "message": "재귀 한도를 초과하여 판단 불가.",  # 응답 메시지 
-            "item" : '재귀 한도를 초과하여 판단 불가.'
+            "item" : None
         }
     except Exception as e:
             traceback.print_exc()
