@@ -1,0 +1,22 @@
+# Fast-API
+fastapi
+uvicorn[standard]
+sqlalchemy
+
+# langgraph-Library
+python-dotenv==1.0.1 ; python_version >= "3.11" and python_version < "3.12"
+langchain-community==0.2.15 ; python_version >= "3.11" and python_version < "3.12"
+langchain-core==0.2.37 ; python_version >= "3.11" and python_version < "3.12"
+langchain-milvus==0.1.4 ; python_version >= "3.11" and python_version < "3.12"
+langchain-openai==0.1.23 ; python_version >= "3.11" and python_version < "3.12"
+langchain-text-splitters==0.2.2 ; python_version >= "3.11" and python_version < "3.12"
+langchain==0.2.15 ; python_version >= "3.11" and python_version < "3.12"
+sentence-transformers==3.0.1 ; python_version >= "3.11" and python_version < "3.12"
+langgraph
+pymupdf
+pymilvus==2.4.12
+typing
+bs4
+IPython
+openai
+boto3
