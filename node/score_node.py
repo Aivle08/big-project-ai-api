@@ -91,7 +91,7 @@ def relevance_check(state: ScoreState):
 
 
 def no_relevance(state: ScoreState):
-    state['eval_document'] = ['0',f"지원자는 {state['eval_item']}에 관련 정보가 부족하여 최하 점수를 부여하였습니다."]
+    state['eval_resume'] = {'eval_resume': ['0',f"지원자는 {state['eval_item']}에 관련 정보가 부족하여 최하 점수를 부여하였습니다."]}
     return state
 
 # PydanticOutputParser
