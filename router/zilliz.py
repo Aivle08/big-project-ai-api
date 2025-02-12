@@ -54,6 +54,13 @@ def disconnect_milvus():
 ##### 데이터 삽입 #####
 # resume에 지원서 pdf 로드하기
 def insert_data_resume(item: ResumeInsertDTO):
+    """
+    지원자의 이력서를 PDF 형태로 S3에서 다운로드하여 Zilliz에 저장하는 함수.
+    - PDF 파일을 PyMuPDFLoader로 로드하여 텍스트 추출
+    - MarkdownTextSplitter를 사용하여 청크(Chunk) 단위로 나눔
+    - OpenAIEmbeddings을 활용하여 벡터 변환 후 Zilliz에 저장
+    """
+
     # 컬렉션 연결
     collection_name = "resume"
     collection = Collection(name=collection_name)
@@ -110,9 +117,9 @@ def insert_data_resume(item: ResumeInsertDTO):
 # evaluation에 평가 기준 로드하기
 def insert_data_evaluation(recruitment_id, detail_list):
     """
-    evaluation 컬렉션에 PDF 데이터를 삽입하는 함수.
-    
-    pdf_folder (str): PDF 파일이 위치한 폴더 경로.
+    채용 공고의 평가 기준 데이터를 Zilliz에 삽입하는 함수.
+    - 텍스트를 RecursiveCharacterTextSplitter로 분할하여 청크화
+    - OpenAIEmbeddings을 사용하여 벡터 변환 후 Zilliz에 저장
     """
     # 컬렉션 이름
     collection_name = "evaluation"
@@ -140,6 +147,7 @@ def insert_data_evaluation(recruitment_id, detail_list):
 ##### 데이터 삭제 #####
 # resume에 지원자자 데이터 삭제 
 def delete_data_resume(applicant_id_list):
+    
     # 컬렉션 연결
     collection_name = "resume"
     collection = Collection(name=collection_name)
@@ -184,6 +192,9 @@ async def insert_resume(item: ResumeInsertDTO):
 # zillz에 평가 항목 상세 내용 추가
 @zilliz.post("/insertDetail", status_code = status.HTTP_200_OK, tags=['zilliz'])
 async def insert_detail(item: EvalInsertDTO):
+    """
+    채용 공고의 평가 기준 데이터를 Milvus(Zilliz)에 저장하는 API.
+    """
     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
     try:
         milvus_connect()
@@ -207,6 +218,9 @@ async def insert_detail(item: EvalInsertDTO):
 # 이거 리스트 형태로 수정 필요할 듯 공고를 삭제하면서 이력서 내용을 삭제하는 것것
 @zilliz.post("/deleteResume", status_code = status.HTTP_200_OK, tags=['zilliz'])
 async def delete_Resume(item: ResumeDeleteDTO):
+    """
+    지원자의 이력서 데이터를 Zilliz에서 삭제하는 API.
+    """
     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
     try:
         milvus_connect()
@@ -229,6 +243,10 @@ async def delete_Resume(item: ResumeDeleteDTO):
 # zillz에서 공고 데이터 삭제
 @zilliz.post("/deleteDetial", status_code = status.HTTP_200_OK, tags=['zilliz'])
 async def delete_detail(item: EvalDeleteDTO):
+    """
+    지원자의 이력서 데이터를 Zilliz에서 삭제하는 API.
+    """
+
     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
     try:
         milvus_connect()

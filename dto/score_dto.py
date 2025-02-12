@@ -1,6 +1,16 @@
 from pydantic import Field, BaseModel
 
 class ScoreDTO(BaseModel):
+    """
+    ScoreDTO (Score Data Transfer Object)
+
+    지원자 자소서를 평가하기 위한 데이터 객체.
+    
+    Attributes:
+        job (str): 평가 대상 직무명.
+        eval_item (str): 평가항목.
+        eval_item_content (str): 평가항목에 대한 세부 설명 및 요구 사항.
+    """
     job: str = Field('IT영업', description='직무')
     eval_item: str = Field('공고', description='평가 기준')
     eval_item_content: str = Field("""

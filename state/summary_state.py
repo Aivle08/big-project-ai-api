@@ -13,5 +13,5 @@ class extractionState(TypedDict):
     query_main: Annotated[str, "맨 처음 들어가는 query"]
     applicant_id: Annotated[int, '지원자 식별자']
     resume: Annotated[str, "지원자 자소서"]
-    output_form: Annotated[str, "출력 형식식"]
+    output_form: Annotated[str, "출력 형식"]
     final_result: Annotated[str, "요약 결과"]

@@ -1,11 +1,31 @@
 from pydantic import Field, BaseModel
 
 class TechDTO(BaseModel):
+    """
+    TechDTO (Tech Data Transfer Object)
+
+    지원자 자소서에서 기술 중심 질문을 생성하기 위한 데이터 객체.
+    
+    Attributes:
+        job (str): 채용 대상 직무명.
+        company_id (int): 채용 회사의 ID.
+        applicant_id (int): 지원자의 고유 ID.
+    """
     job: str = Field('IT영업', description='직무')
     company_id: int = Field(1, description='회사 id')
     applicant_id: int = Field(101, description='지원자 id')
 
 class Experience_WorkDTO(BaseModel):
+    """
+    UserDTO (User Data Transfer Object)
+
+    지원자 자소서에서 경험과 경력중심 질문을 생성하기 위한 데이터 객체.
+
+    Attributes:
+        name (str): 사용자의 이름.
+        email (str): 사용자의 이메일 주소.
+        age (int | None): 사용자의 나이 (선택 사항).
+    """
     job: str = Field('IT영업', description='직무')
     company_id: int = Field(1, description='회사 id')
     applicant_id: int = Field(101, description='지원자 id')

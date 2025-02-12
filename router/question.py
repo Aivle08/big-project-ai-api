@@ -19,7 +19,7 @@ from state.question_state import QuestionState
 # Node
 from node.question_node import input, retrieve_document, relevance_check, combine_prompt, fact_checking, rewrite_question, experience_work_fact_checking
 # etc
-from etc.etcc import question_is_relevant, question_is_fact
+from etc.validator import question_is_relevant, question_is_fact
 from etc.graphs import visualize_graph
 from etc.messages import invoke_graph, random_uuid
 from prompt.question_prompt import tecnology_prompt, rewrite_prompt, experience_prompt, work_prompt
@@ -31,6 +31,12 @@ question = APIRouter(prefix='/question')
 # 기술 중심 Prompt
 @question.post("/tech", status_code = status.HTTP_200_OK, tags=['question'])
 async def tech_langgraph(item: TechDTO):
+    """
+    기술 중심 질문을 생성하는 LangGraph 기반 워크플로우 실행.
+    - 지원자의 이력서 및 기업 평가 기준을 검색하고 관련성 검토 후 질문 생성.
+    - 질문이 관련성이 낮으면 재작성 후 다시 검색을 수행.
+    - Fact-checking을 거쳐 최종 질문 반환.
+    """
     print('\n\033[36m[AI-API] \033[32m 질문 추출(기술)')
     try:
         workflow = StateGraph(QuestionState)
@@ -183,6 +189,11 @@ async def tech_langgraph(item: TechDTO):
 # 경험 중심 Prompt
 @question.post("/experience", status_code = status.HTTP_200_OK, tags=['question'])
 def experience_langgraph(item: Experience_WorkDTO):
+    """
+    경험 중심 질문을 생성하는 LangGraph 기반 워크플로우 실행.
+    - 지원자의 업무 경험을 기반으로 질문을 생성하고 관련성 검토 후 최적화.
+    - Fact-checking을 수행하여 신뢰도를 보장.
+    """
     print('\n\033[36m[AI-API] \033[32m 질문 추출(경험)')
     try:
         workflow = StateGraph(QuestionState)
@@ -302,6 +313,12 @@ def experience_langgraph(item: Experience_WorkDTO):
 # 경력 중심 Prompt
 @question.post("/work", status_code = status.HTTP_200_OK, tags=['question'])
 def work_langgraph(item: Experience_WorkDTO):
+    '''
+    경력 중심 질문을 생성하는 LangGraph 기반 워크플로우 실행.
+    - 지원자의 경력, 인턴 및 대외활동을 기반으로 질문을 생성하고 관련성을 검토.
+    - 관련성이 낮으면 질문을 재작성하여 검색을 최적화.
+    - Fact-checking을 수행하여 신뢰도를 보장하고 최종 질문을 출력.
+    '''
     print('\n\033[36m[AI-API] \033[32m 질문 추출(경력)')
     try:
         workflow = StateGraph(QuestionState)
