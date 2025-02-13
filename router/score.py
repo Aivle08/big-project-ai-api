@@ -19,7 +19,7 @@ from state.score_state import ScoreState
 # Node
 from node.score_node import retrieve_document, score_resume, fact_checking, relevance_check, no_relevance
 # etc
-from etc.etcc import score_is_fact, score_is_relevant
+from etc.validator import score_is_fact, score_is_relevant
 from etc.graphs import visualize_graph
 from etc.messages import invoke_graph, random_uuid
 from prompt.score_prompt import score_prompt
@@ -31,6 +31,12 @@ score = APIRouter(prefix='/score')
 # 요약 Prompt
 @score.post("", status_code = status.HTTP_200_OK, tags=['score'])
 def summary_graph(item: ScoreDTO):
+    '''
+    지원자의 자기소개서를 평가하여 점수를 부여하는 LangGraph 기반 워크플로우 실행.
+    - 자기소개서와 평가 기준을 비교하여 관련성을 분석하고 점수를 매김.
+    - 관련성이 없으면 0점 처리.
+    - 사실 검증을 수행하여 평가의 신뢰성을 확보
+    '''
     print('\n\033[36m[AI-API] \033[32m 점수 측정')
     try:
         workflow = StateGraph(ScoreState)

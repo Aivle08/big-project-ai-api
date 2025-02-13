@@ -23,7 +23,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 # Module
 from state.question_state import QuestionState
 from etc.evaluator import GroundednessChecker
-from etc.etcc import format_docs
+from etc.validator import format_docs
 ####################################################################################################################
 ################################################### STATE ########################################################### 청크 합치기
 # 환경설정
@@ -32,12 +32,31 @@ load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
 embeddings = OpenAIEmbeddings()
 
-# Input 노드 정의
+
 def input(state: QuestionState):
+    """
+    langgraph 시작 노드
+
+    Args:
+        state (QuestionState): 질문의 상태 정보를 포함하는 객체.
+
+    Returns:
+        QuestionState: 질문의 상태 정보 
+    """
     return state
     
-# 문서 검색 노드
 def retrieve_document(state: QuestionState, collection_name: str, class_id: str):
+    """
+    문서 검색 노드
+
+    Args:
+        state (QuestionState): 질문의 상태 정보를 포함하는 객체.
+        collection_name (str): zilliz collection명 (예: "resume" 또는 "evaluation").
+        class_id (str): 지원자, 회사 고유 ID
+
+    Returns:
+        QuestionState: 질문의 상태 정보 
+    """
     # 질문을 상태에서 가져옵니다.
     latest_question = state[f"{collection_name}_query"]
     state_class_id = state[f'{class_id}']
@@ -67,8 +86,17 @@ def retrieve_document(state: QuestionState, collection_name: str, class_id: str)
     # 검색된 문서를 context 키에 저장합니다.
     return retrieved_docs
 
-# 기술 중심 자소서 관련성 체크 노드
 def relevance_check(state: QuestionState, key: str):
+    """
+    기술 중심 자소서의 질문과 문맥 간 관련성을 평가하는 함수.
+
+    Args:
+        state (QuestionState): 현재 질문의 상태를 저장하는 객체.
+        key (str): 관련성을 평가할 대상의 키값 (예: "resume" 또는 "evaluation").
+
+    Returns:
+        str: 관련성이 있는 경우 "yes", 관련성이 없는 경우 "no".
+    """
     # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
         llm=ChatOpenAI(model="gpt-4o", temperature=0), target="generate-question-retrieval"
@@ -85,8 +113,17 @@ def relevance_check(state: QuestionState, key: str):
     # 참고: 여기서의 관련성 평가기는 각자의 Prompt 를 사용하여 수정할 수 있습니다. 여러분들의 Groundedness Check 를 만들어 사용해 보세요!
     return response.score
 
-# 경험 중심/ 경력 중심 자소서 관련성 체크 노드
 def experience_work_fact_checking(state: QuestionState, key: str):
+    """
+    경험 중심 또는 경력 중심 자소서의 질문과 문맥 간 관련성을 평가하는 함수.
+
+    Args:
+        state (QuestionState): 현재 질문의 상태를 저장하는 객체.
+        key (str): 관련성을 평가할 대상의 키값 (예: "resume" 또는 "evaluation").
+
+    Returns:
+        str: 관련성이 있는 경우 "yes", 관련성이 없는 경우 "no".
+    """
     # 관련성 평가기를 생성합니다.
     question_answer_relevant = GroundednessChecker(
         llm=ChatOpenAI(model="gpt-4o", temperature=0), target="score-question-retrieval"
@@ -104,6 +141,17 @@ def experience_work_fact_checking(state: QuestionState, key: str):
     return response.score
 
 def rewrite_question(state: QuestionState, prompt: PromptTemplate, collection_name: str):
+    """
+    Query 재작성 노드
+
+    Args:
+        state (QuestionState): 질문의 상태 정보를 포함하는 객체.
+        prompt (PromptTemplate): 질문 생성을 위한 프롬프트 템플릿(기술 중심, 경력 중심, 경험 중심 프롬프트)
+        collection_name (str): 지원자, 회사 고유 ID
+
+    Returns:
+        str: 재작성한 Query
+    """
     print('이전 query: ', state[f'{collection_name}_query'])
     # 1. 모델 선언
     model = ChatOpenAI(model='gpt-4o', streaming=True)
@@ -127,8 +175,17 @@ class question(BaseModel):
         description="A list containing two interview questions as plain text strings."
     )
 
-# 결과 종합 노드
 def combine_prompt(state: QuestionState, prompt: PromptTemplate):
+    """
+    지원자의 자소서, 평가 기준, 직무 정보를 기반으로 최종 질문을 생성하는 함수.
+
+    Args:
+        state (QuestionState): 현재 질문 생성에 필요한 상태 정보 저장 객체.
+        prompt (PromptTemplate): 질문 생성을 위한 프롬프트 템플릿(기술 중심, 경력 중심, 경험 중심 프롬프트)
+
+    Returns:
+        dict: 생성된 최종 질문을 포함하는 딕셔너리. (예: {'final_question': [질문1, 질문2]})
+    """
     # State 변수 선언 지정
     job = state['job']
     resume = state['resume']
@@ -153,6 +210,15 @@ def combine_prompt(state: QuestionState, prompt: PromptTemplate):
 
 # 관련성 체크 노드 (기술 중심)
 def fact_checking(state: QuestionState):
+    """
+    지원자의 자소서 및 회사 평가 기준을 기반으로 생성된 질문이 사실에 근거하고 있는지 검증하는 함수.
+
+    Args:
+        state (QuestionState): 현재 상태 정보를 저장하는 객체로, 자소서, 평가 기준, 생성된 질문을 포함.
+
+    Returns:
+        dict: 질문의 사실 여부를 나타내는 결과값을 포함하는 딕셔너리. (예: {'fact': 'yes' 또는 'no'})
+    """
     # 1. 관련성 평가기를 생성
     question_answer_relevant = GroundednessChecker(
         llm=ChatOpenAI(model='gpt-4o', temperature=0), target="question-fact-check"

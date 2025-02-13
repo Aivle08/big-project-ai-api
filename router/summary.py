@@ -21,7 +21,7 @@ from state.summary_state import SummaryState, extractionState
 # Node
 from node.summary_node import resume_load, resume_summary, fact_checking, retrieve_document, combine_prompt
 # etc
-from etc.etcc import summary_is_fact
+from etc.validator import summary_is_fact
 from etc.graphs import visualize_graph
 from etc.messages import invoke_graph, random_uuid
 from prompt.summary_prompt import summary_prompt, extraction_prompt
@@ -33,6 +33,11 @@ summary = APIRouter(prefix='/summary')
 # 요약 Prompt
 @summary.post("", status_code = status.HTTP_200_OK, tags=['summary'])
 def summary_graph(item: SummaryDTO):
+    """
+    지원자의 자기소개서를 요약하고 Fact-checking을 수행하는 LangGraph 기반 워크플로우 실행.
+    - 지원자의 자기소개서를 불러와 GPT-4o 모델을 활용하여 핵심 내용을 요약.
+    - 요약된 내용이 원본과 일치하는지 Fact-checking을 수행하여 신뢰성을 보장.
+    """
     print('\n\033[36m[AI-API] \033[32m 자소서 요약')
     try:
         workflow = StateGraph(SummaryState)
@@ -120,6 +125,11 @@ def summary_graph(item: SummaryDTO):
 # 요약 Prompt
 @summary.post("/extraction", status_code = status.HTTP_200_OK, tags=['summary'])
 def tech_prompt(item: ExtractionDTO):
+    """
+    지원자의 이력서에서 주요 인적 사항(이름, 연락처, 학력, 자격증 등)을 추출하는 API.
+    - PDF 또는 텍스트 기반의 자기소개서에서 필요한 정보를 분석하고 데이터화.
+    - 추출된 데이터를 JSON 형식으로 제공하여 채용 평가 시스템에서 활용 가능하도록 함.
+    """
     print('\n\033[36m[AI-API] \033[32m 자소서 인적사항')
     try:
         workflow = StateGraph(extractionState)
