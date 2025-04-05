@@ -24,6 +24,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 from state.question_state import QuestionState
 from etc.evaluator import GroundednessChecker
 from etc.validator import format_docs
+from retriever.hybrid import hybrid_retriever
 ####################################################################################################################
 ################################################### STATE ########################################################### 청크 합치기
 # 환경설정
@@ -60,20 +61,8 @@ def retrieve_document(state: QuestionState, collection_name: str, class_id: str)
     # 질문을 상태에서 가져옵니다.
     latest_question = state[f"{collection_name}_query"]
     state_class_id = state[f'{class_id}']
-    # Milvus vectorstore 설정
-    vectorstore_resume = Milvus(
-        collection_name=collection_name,  # 기존 컬렉션 이름
-        embedding_function=embeddings,  # 임베딩 함수
-        connection_args={
-            "uri": os.environ['CLUSTER_ENDPOINT'],
-            "token": os.environ['TOKEN'],
-        }
-    )
-    # vectorstore를 retriever로 변환
-    retriever = vectorstore_resume.as_retriever(search_kwargs={
-            'expr' : f"{class_id} == {state_class_id}",
-        }
-    )
+    
+    retriever = hybrid_retriever(collection_name,state_class_id,class_id)
     
     # 문서에서 검색하여 관련성 있는 문서를 찾습니다.
     retrieved_docs = retriever.invoke(latest_question)
