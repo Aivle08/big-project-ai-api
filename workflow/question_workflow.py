@@ -40,11 +40,30 @@ def tech_stategraph(workflow: StateGraph):
         lambda state: {"final_question": combine_prompt(state, tecnology_prompt)},
     )
     workflow.add_node("fact_checking", fact_checking)
+    workflow.add_node(
+        "wait_for_both_relevance",
+        lambda state: {"relevance_ready": state['relevance_1']['status'] == 'relevant' and state['relevance_2']['status'] == 'relevant'}
+    )
+    
     # 2. Edge 연결
     workflow.add_edge("input", "retrieve_1_document")
     workflow.add_edge("input", "retrieve_2_document")
     workflow.add_edge("retrieve_1_document", "relevance_check_1")
     workflow.add_edge("retrieve_2_document", "relevance_check_2")
+    
+    workflow.add_conditional_edges(
+        "wait_for_both_relevance",
+        lambda state: state['relevance_ready'],
+        {
+            True: "combine_prompt",
+            False: END  # 또는 다른 fallback 처리
+        }
+    )
+
+    
+    workflow.add_edge("relevance_check_1", "wait_for_both_relevance")
+    workflow.add_edge("relevance_check_2", "wait_for_both_relevance")
+
     
     # 3. 조건부 엣지 추가
     workflow.add_conditional_edges(
@@ -56,7 +75,6 @@ def tech_stategraph(workflow: StateGraph):
         },
     )
     
-    # 3. 조건부 엣지 추가
     workflow.add_conditional_edges(
         "relevance_check_2",  # 관련성 체크 노드에서 나온 결과를 is_relevant 함수에 전달합니다.
         lambda state: question_is_relevant(state, key = 'relevance_2'),

@@ -64,7 +64,7 @@ async def tech_langgraph(item: TechDTO):
 
 
         # 10. 그래프 실행 출력
-        invoke_graph(app, inputs, config)
+        # invoke_graph(app, inputs, config)
 
         # 11. 최종 출력 확인
         outputs = app.get_state(config).values
