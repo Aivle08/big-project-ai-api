@@ -83,7 +83,7 @@ def hybrid_retriever(collection_name: str, state_class_id: str, class_id: str):
     )
     
     # 저장된 BM25Retriever 객체 불러오기
-    with open(f"bm25_{collection_name}_retriever.pkl", 'rb') as file:
+    with open(f"bm25_db/bm25_{collection_name}_retriever.pkl", 'rb') as file:
         sparse_retriever = pickle.load(file)
 
     print("BM25Retriever 객체가 성공적으로 불러와졌습니다.")
