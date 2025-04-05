@@ -2,8 +2,9 @@
 fastapi
 uvicorn[standard]
 sqlalchemy
+dotenv
 
-# langgraph-Library
+# Langchain
 python-dotenv==1.0.1 ; python_version >= "3.11" and python_version < "3.12"
 langchain-community==0.2.15 ; python_version >= "3.11" and python_version < "3.12"
 langchain-core==0.2.37 ; python_version >= "3.11" and python_version < "3.12"
@@ -14,9 +15,10 @@ langchain==0.2.15 ; python_version >= "3.11" and python_version < "3.12"
 sentence-transformers==3.0.1 ; python_version >= "3.11" and python_version < "3.12"
 langgraph
 pymupdf
-pymilvus==2.4.12
+pymilvus==2.5.3
 typing
 bs4
 IPython
 openai
 boto3
+rank_bm25

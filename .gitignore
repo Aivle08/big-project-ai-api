@@ -4,3 +4,5 @@ __pycache__/
 *.pyo
 .vscode
 /.env
+자소서_pdf
+회사기준_pdf

@@ -130,19 +130,19 @@ def insert_data_evaluation(recruitment_id, detail_list):
     for detail in detail_list :
         total_detail += detail
     
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    text_splitter = MarkdownTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = text_splitter.split_text(total_detail)
     
     for chunk in chunks:
-            vector = embeddings.embed_query(chunk)
-            
-            data = {
-                'company_id' : recruitment_id,
-                'vector':vector,
-                'text' : chunk,
-            }
-            
-            collection.insert(collection = collection_name, data = data,) 
+        vector = embeddings.embed_query(chunk)
+        
+        data = {
+            'company_id' : recruitment_id,
+            'vector':vector,
+            'text' : chunk,
+        }
+        
+        collection.insert(collection = collection_name, data = data,) 
 
 ##### 데이터 삭제 #####
 # resume에 지원자자 데이터 삭제 
