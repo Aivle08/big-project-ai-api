@@ -22,11 +22,17 @@
 ## 3. 기술 스택
 
 - **백엔드:** FastAPI, Uvicorn
-- **AI/ML:** Langchain, Langgraph, Sentence-Transformers, OpenAI
-- **벡터 데이터베이스:** Milvus (`langchain-milvus` 사용)
-- **데이터 처리:** Pandas, Pydantic (FastAPI를 통해 암시적으로 사용)
-- **데이터베이스:** SQLAlchemy (`requirements.txt` 기반, 선택 사항)
-- **기타:** python-dotenv, rank_bm25
+- **AI/ML:** Sentence-Transformers, OpenAI
+- **LLM 프레임워크:** Langchain, Langgraph
+- **벡터 데이터베이스:** Milvus (`langchain-milvus` 사용, HNSW 인덱싱)
+- **Retriever:**
+    - **Sparse Retriever:** rank_bm25
+    - **Hybrid Retriever:** Dense + Sparse
+- **프롬프트 엔지니어링:**
+    - Retrieval-Augmented Generation (RAG)
+    - ReAct (Reason-Act) Pattern
+    - Self-Correction/Reflection
+- **기타:** python-dotenv
 
 ## 4. 프로젝트 구조
 
