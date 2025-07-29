@@ -30,9 +30,13 @@
     - **Hybrid Retriever:** Dense + Sparse
 - **프롬프트 엔지니어링:**
     - Retrieval-Augmented Generation (RAG)
-    - ReAct (Reason-Act) Pattern
-    - Self-Correction/Reflection
-- **기타:** python-dotenv
+    - Instruction Prompting
+    - Few-shot Prompting
+    - Role Prompting
+    - Context-aware Prompting
+    - Content Restriction Prompting
+    > **Note**: 이 프로젝트에서 RAG는 프롬프트 엔지니어링의 단순한 기법이 아니라, 외부 정보(검색된 문서)를 프롬프트에 동적으로 결합하여 LLM의 답변 품질과 신뢰도를 높이는 핵심 아키텍처로 사용됩니다. 즉, RAG는 정교한 프롬프트 엔지니어링을 자동화하여 구현하는 시스템입니다.
+
 
 ## 4. 프로젝트 구조
 
